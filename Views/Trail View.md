@@ -1,4 +1,8 @@
-The Trail View shows all paths going _up_ from the current note.
+The Trail View shows all paths going _up_ from the current note. In this example, we see a binary tree going up two levels from the current note. The [[Codeblocks|Mermaid graph]] below visualises the same data:
+
+%% TODO: Get a narrower link to Mermaid graph. Currently it's just to [[Codeblocks]] %%
+
+![[view.page.trail.grid.png]]
 
 ## Settings
 

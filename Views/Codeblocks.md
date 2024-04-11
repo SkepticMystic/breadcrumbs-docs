@@ -4,10 +4,12 @@ Breadcrumbs adds a new codeblock language, `breadcrumbs`. Currently, this can be
 type: tree
 dirs: down
 depth: 0-3
-sort: basename desc
+sort: basename asc
 ```
 
-The above example would render a markdown list of all paths going _down_ from the current note, up to a depth of 3, sorted by the basename of the notes, in descending order.
+The above example would render a markdown list of all paths going _down_ from the current note, up to a depth of 3, sorted by the basename of the notes, in ascending order.
+
+![[view.codeblock.tree.png]]
 
 > [!WARNING]
 > Although it appears similar, the syntax used is **not** YAML. Currently, the `key: value` pair is simply split at the colon : and the items trimmed.

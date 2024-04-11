@@ -1,0 +1,34 @@
+{
+  "conventionalCommits.scopes": [
+    "builder:dataview-note",
+    "builder:date-note",
+    "builder:dendron-note",
+    "builder:folder-note",
+    "builder:johnny-decimal-note",
+    "builder:list-note",
+    "builder:regex-note",
+    "builder:tag-note",
+    "builder:typed-link",
+
+    "command:freeze-crumbs",
+    "command:jump",
+    "command:list-index",
+    "command:rebuild-graph",
+    "command:threading",
+
+    "debugging",
+    "builders",
+    "implied-edges",
+
+    "suggestor:BC-metadata",
+    "suggestor:hierarchy-field",
+
+    "view:codeblock:mermaid",
+    "view:codeblock:tree",
+    "view:codeblock",
+    "view:juggl",
+    "view:matrix",
+    "view:trail",
+    "view:tree"
+  ]
+}

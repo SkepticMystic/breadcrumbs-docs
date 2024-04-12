@@ -9662,15 +9662,19 @@ var import_obsidian_dataview = __toESM(require_lib());
 var LOG_LEVELS = ["DEBUG", "INFO", "WARN", "ERROR"];
 var LEVEL_COLOURS = {
   DEBUG: "#999",
-  INFO: "#fff",
+  INFO: null,
   WARN: "#f90",
   ERROR: "#f00"
 };
-var build_prefix = (level) => [
-  `%c[BC:${level}][${(/* @__PURE__ */ new Date()).toISOString().split("T")[1]}]`,
-  `color: ${LEVEL_COLOURS[level]};`,
-  "\n"
-];
+var build_prefix = (level) => {
+  const colour = LEVEL_COLOURS[level];
+  const prefix = `[BC:${level}][${(/* @__PURE__ */ new Date()).toISOString().split("T")[1]}]`;
+  return [
+    colour ? `%c${prefix}` : prefix,
+    colour ? `color: ${LEVEL_COLOURS[level]};` : "",
+    "\n"
+  ];
+};
 var Logger = class {
   constructor(level) {
     this.set_level(level);
@@ -25681,6 +25685,9 @@ var _add_settings_matrix = (plugin, containerEl) => {
 // src/views/page.ts
 var import_obsidian17 = require("obsidian");
 
+// src/components/ObsidianLink.svelte
+var import_obsidian16 = require("obsidian");
+
 // src/stores/active_file.ts
 var import_obsidian15 = require("obsidian");
 
@@ -25736,7 +25743,6 @@ var active_file_store = {
 };
 
 // src/components/ObsidianLink.svelte
-var import_obsidian16 = require("obsidian");
 function create_fragment24(ctx) {
   let span;
   let t;
@@ -26409,22 +26415,25 @@ function create_fragment26(ctx) {
   };
 }
 function instance26($$self, $$props, $$invalidate) {
-  let $active_file_store;
-  component_subscribe($$self, active_file_store, ($$value) => $$invalidate(2, $active_file_store = $$value));
   let { plugin } = $$props;
-  const grouped_out_edges = $active_file_store && // Even tho we ensure the graph is built before the views are registered,
-  // Existing views still try render before the graph is built.
-  plugin.graph.hasNode($active_file_store.path) ? group_by(plugin.graph.get_out_edges($active_file_store.path).filter((e) => has_edge_attrs(e, { $or_dirs: ["prev", "next"] })), (e) => e.attr.dir) : null;
+  let { file_path } = $$props;
+  const grouped_out_edges = (
+    // Even tho we ensure the graph is built before the views are registered,
+    // Existing views still try render before the graph is built.
+    plugin.graph.hasNode(file_path) ? group_by(plugin.graph.get_out_edges(file_path).filter((e) => has_edge_attrs(e, { $or_dirs: ["prev", "next"] })), (e) => e.attr.dir) : null
+  );
   $$self.$$set = ($$props2) => {
     if ("plugin" in $$props2)
       $$invalidate(0, plugin = $$props2.plugin);
+    if ("file_path" in $$props2)
+      $$invalidate(2, file_path = $$props2.file_path);
   };
-  return [plugin, grouped_out_edges];
+  return [plugin, grouped_out_edges, file_path];
 }
 var PrevNextView = class extends SvelteComponent {
   constructor(options) {
     super();
-    init(this, options, instance26, create_fragment26, safe_not_equal, { plugin: 0 }, add_css3);
+    init(this, options, instance26, create_fragment26, safe_not_equal, { plugin: 0, file_path: 2 }, add_css3);
   }
 };
 var PrevNextView_default = PrevNextView;
@@ -27202,7 +27211,7 @@ function create_if_block8(ctx) {
       )
         add_render_callback(() => (
           /*select0_change_handler*/
-          ctx[7].call(select0)
+          ctx[8].call(select0)
         ));
       attr(select1, "class", "dropdown");
       if (
@@ -27211,7 +27220,7 @@ function create_if_block8(ctx) {
       )
         add_render_callback(() => (
           /*select1_change_handler*/
-          ctx[9].call(select1)
+          ctx[10].call(select1)
         ));
       attr(button0, "class", "aspect-square text-lg");
       attr(button0, "aria-label", "Decrease max depth");
@@ -27280,37 +27289,37 @@ function create_if_block8(ctx) {
             select0,
             "change",
             /*select0_change_handler*/
-            ctx[7]
+            ctx[8]
           ),
           listen(
             select0,
             "change",
             /*change_handler*/
-            ctx[8]
-          ),
-          listen(
-            select1,
-            "change",
-            /*select1_change_handler*/
             ctx[9]
           ),
           listen(
             select1,
             "change",
-            /*change_handler_1*/
+            /*select1_change_handler*/
             ctx[10]
+          ),
+          listen(
+            select1,
+            "change",
+            /*change_handler_1*/
+            ctx[11]
           ),
           listen(
             button0,
             "click",
             /*click_handler*/
-            ctx[11]
+            ctx[12]
           ),
           listen(
             button1,
             "click",
             /*click_handler_1*/
-            ctx[12]
+            ctx[13]
           )
         ];
         mounted = true;
@@ -27708,12 +27717,13 @@ function instance29($$self, $$props, $$invalidate) {
   let sliced_paths;
   let deduped_paths;
   let sorted_paths;
-  let $active_file_store;
-  component_subscribe($$self, active_file_store, ($$value) => $$invalidate(13, $active_file_store = $$value));
   let { plugin } = $$props;
-  const all_paths2 = $active_file_store && // Even tho we ensure the graph is built before the views are registered,
-  // Existing views still try render before the graph is built.
-  plugin.graph.hasNode($active_file_store.path) ? plugin.settings.hierarchies.map((_hierarchy, hierarchy_i) => Traverse.all_paths("depth_first", plugin.graph, $active_file_store.path, (edge) => has_edge_attrs(edge, { dir: "up", hierarchy_i }))).flat() : [];
+  let { file_path } = $$props;
+  const all_paths2 = (
+    // Even tho we ensure the graph is built before the views are registered,
+    // Existing views still try render before the graph is built.
+    plugin.graph.hasNode(file_path) ? plugin.settings.hierarchies.map((_hierarchy, hierarchy_i) => Traverse.all_paths("depth_first", plugin.graph, file_path, (edge) => has_edge_attrs(edge, { dir: "up", hierarchy_i }))).flat() : []
+  );
   function select0_change_handler() {
     plugin.settings.views.page.trail.format = select_value(this);
     $$invalidate(0, plugin);
@@ -27729,15 +27739,17 @@ function instance29($$self, $$props, $$invalidate) {
   $$self.$$set = ($$props2) => {
     if ("plugin" in $$props2)
       $$invalidate(0, plugin = $$props2.plugin);
+    if ("file_path" in $$props2)
+      $$invalidate(4, file_path = $$props2.file_path);
   };
   $$self.$$.update = () => {
     if ($$self.$$.dirty & /*plugin*/
     1) {
       $:
-        $$invalidate(6, selected_paths = plugin.settings.views.page.trail.selection === "all" ? all_paths2 : plugin.settings.views.page.trail.selection === "shortest" ? all_paths2.slice(-1) : plugin.settings.views.page.trail.selection === "longest" ? all_paths2.slice(0, 1) : [[]]);
+        $$invalidate(7, selected_paths = plugin.settings.views.page.trail.selection === "all" ? all_paths2 : plugin.settings.views.page.trail.selection === "shortest" ? all_paths2.slice(-1) : plugin.settings.views.page.trail.selection === "longest" ? all_paths2.slice(0, 1) : [[]]);
     }
     if ($$self.$$.dirty & /*selected_paths*/
-    64) {
+    128) {
       $:
         $$invalidate(1, MAX_DEPTH = Math.max(0, ...selected_paths.map((p) => p.length)));
     }
@@ -27747,19 +27759,19 @@ function instance29($$self, $$props, $$invalidate) {
         $$invalidate(2, depth = Math.min(MAX_DEPTH, plugin.settings.views.page.trail.default_depth));
     }
     if ($$self.$$.dirty & /*selected_paths, depth*/
-    68) {
+    132) {
       $:
-        $$invalidate(5, sliced_paths = selected_paths.map((path) => path.slice(0, depth)));
+        $$invalidate(6, sliced_paths = selected_paths.map((path) => path.slice(0, depth)));
     }
     if ($$self.$$.dirty & /*depth, MAX_DEPTH, sliced_paths*/
-    38) {
+    70) {
       $:
-        $$invalidate(4, deduped_paths = // There are no duplicates if the depth is the max depth.
+        $$invalidate(5, deduped_paths = // There are no duplicates if the depth is the max depth.
         // The traversal wouldn't add them in the first place.
         depth === MAX_DEPTH ? sliced_paths : remove_duplicates_by(sliced_paths, (path) => path.map((p) => p.target_id).join("/")));
     }
     if ($$self.$$.dirty & /*deduped_paths*/
-    16) {
+    32) {
       $:
         $$invalidate(3, sorted_paths = deduped_paths.sort((a, b) => {
           const len_diff = b.length - a.length;
@@ -27775,6 +27787,7 @@ function instance29($$self, $$props, $$invalidate) {
     MAX_DEPTH,
     depth,
     sorted_paths,
+    file_path,
     deduped_paths,
     sliced_paths,
     selected_paths,
@@ -27789,7 +27802,7 @@ function instance29($$self, $$props, $$invalidate) {
 var TrailView = class extends SvelteComponent {
   constructor(options) {
     super();
-    init(this, options, instance29, create_fragment29, safe_not_equal, { plugin: 0 });
+    init(this, options, instance29, create_fragment29, safe_not_equal, { plugin: 0, file_path: 4 });
   }
 };
 var TrailView_default = TrailView;
@@ -27801,11 +27814,11 @@ function create_if_block9(ctx) {
   let current;
   let if_block0 = (
     /*enabled_views*/
-    ctx[1].grid && create_if_block_22(ctx)
+    ctx[2].grid && create_if_block_22(ctx)
   );
   let if_block1 = (
     /*enabled_views*/
-    ctx[1].prev_next && create_if_block_12(ctx)
+    ctx[2].prev_next && create_if_block_12(ctx)
   );
   return {
     c() {
@@ -27829,12 +27842,12 @@ function create_if_block9(ctx) {
     p(ctx2, dirty) {
       if (
         /*enabled_views*/
-        ctx2[1].grid
+        ctx2[2].grid
       )
         if_block0.p(ctx2, dirty);
       if (
         /*enabled_views*/
-        ctx2[1].prev_next
+        ctx2[2].prev_next
       )
         if_block1.p(ctx2, dirty);
     },
@@ -27864,10 +27877,18 @@ function create_if_block9(ctx) {
 function create_if_block_22(ctx) {
   let trailview;
   let current;
-  trailview = new TrailView_default({ props: { plugin: (
-    /*plugin*/
-    ctx[0]
-  ) } });
+  trailview = new TrailView_default({
+    props: {
+      plugin: (
+        /*plugin*/
+        ctx[0]
+      ),
+      file_path: (
+        /*file_path*/
+        ctx[1]
+      )
+    }
+  });
   return {
     c() {
       create_component(trailview.$$.fragment);
@@ -27882,6 +27903,10 @@ function create_if_block_22(ctx) {
       1)
         trailview_changes.plugin = /*plugin*/
         ctx2[0];
+      if (dirty & /*file_path*/
+      2)
+        trailview_changes.file_path = /*file_path*/
+        ctx2[1];
       trailview.$set(trailview_changes);
     },
     i(local) {
@@ -27902,10 +27927,18 @@ function create_if_block_22(ctx) {
 function create_if_block_12(ctx) {
   let prevnextview;
   let current;
-  prevnextview = new PrevNextView_default({ props: { plugin: (
-    /*plugin*/
-    ctx[0]
-  ) } });
+  prevnextview = new PrevNextView_default({
+    props: {
+      plugin: (
+        /*plugin*/
+        ctx[0]
+      ),
+      file_path: (
+        /*file_path*/
+        ctx[1]
+      )
+    }
+  });
   return {
     c() {
       create_component(prevnextview.$$.fragment);
@@ -27920,6 +27953,10 @@ function create_if_block_12(ctx) {
       1)
         prevnextview_changes.plugin = /*plugin*/
         ctx2[0];
+      if (dirty & /*file_path*/
+      2)
+        prevnextview_changes.file_path = /*file_path*/
+        ctx2[1];
       prevnextview.$set(prevnextview_changes);
     },
     i(local) {
@@ -27940,7 +27977,7 @@ function create_if_block_12(ctx) {
 function create_fragment30(ctx) {
   let show_if = Object.values(
     /*enabled_views*/
-    ctx[1]
+    ctx[2]
   ).some(Boolean);
   let if_block_anchor;
   let current;
@@ -27982,6 +28019,7 @@ function create_fragment30(ctx) {
 }
 function instance30($$self, $$props, $$invalidate) {
   let { plugin } = $$props;
+  let { file_path } = $$props;
   const enabled_views = {
     grid: plugin.settings.views.page.trail.enabled,
     prev_next: plugin.settings.views.page.prev_next.enabled
@@ -27989,52 +28027,66 @@ function instance30($$self, $$props, $$invalidate) {
   $$self.$$set = ($$props2) => {
     if ("plugin" in $$props2)
       $$invalidate(0, plugin = $$props2.plugin);
+    if ("file_path" in $$props2)
+      $$invalidate(1, file_path = $$props2.file_path);
   };
-  return [plugin, enabled_views];
+  return [plugin, file_path, enabled_views];
 }
 var Page_views = class extends SvelteComponent {
   constructor(options) {
     super();
-    init(this, options, instance30, create_fragment30, safe_not_equal, { plugin: 0 });
+    init(this, options, instance30, create_fragment30, safe_not_equal, { plugin: 0, file_path: 1 });
   }
 };
 var page_views_default = Page_views;
 
 // src/views/page.ts
 var redraw_page_views = (plugin) => {
-  var _a;
-  const markdown_view = plugin.app.workspace.getActiveViewOfType(import_obsidian17.MarkdownView);
-  if (!markdown_view) {
-    return log.info("redraw_page_views > No active markdown view");
+  const markdown_views = plugin.app.workspace.getLeavesOfType("markdown");
+  if (!markdown_views.length) {
+    log.info("redraw_page_views > No markdown views found");
+    return;
   }
-  const markdown_view_mode = markdown_view.getMode();
-  const page_views_el = (_a = markdown_view.containerEl.querySelector(".BC-page-views")) != null ? _a : markdown_view.containerEl.createDiv({
-    cls: "BC-page-views w-full mx-auto"
-  });
-  const max_width = plugin.settings.views.page.all.readable_line_width ? "var(--file-line-width)" : "none";
-  page_views_el.setAttribute("style", `max-width: ${max_width};`);
-  page_views_el.classList.toggle(
-    "BC-page-views-sticky",
-    plugin.settings.views.page.all.sticky
-  );
-  page_views_el.empty();
-  if (markdown_view_mode === "preview") {
-    const view_parent = markdown_view.containerEl.querySelector(
-      ".markdown-reading-view > .markdown-preview-view"
+  markdown_views.forEach((leaf) => {
+    var _a, _b, _c;
+    if (!(leaf.view instanceof import_obsidian17.MarkdownView))
+      return;
+    const markdown_view = leaf.view;
+    const mode = markdown_view.getMode();
+    const page_views_el = (_a = markdown_view.containerEl.querySelector(".BC-page-views")) != null ? _a : markdown_view.containerEl.createDiv({
+      cls: "BC-page-views w-full mx-auto"
+    });
+    const max_width = plugin.settings.views.page.all.readable_line_width ? "var(--file-line-width)" : "none";
+    page_views_el.setAttribute("style", `max-width: ${max_width};`);
+    page_views_el.classList.toggle(
+      "BC-page-views-sticky",
+      plugin.settings.views.page.all.sticky
     );
-    if (!view_parent)
-      return log.info("redraw_page_views > No view_parent");
-    view_parent.insertBefore(page_views_el, view_parent.firstChild);
-  } else {
-    const view_parent = markdown_view.containerEl.querySelector(".cm-scroller");
-    if (!view_parent)
-      return log.info("redraw_page_views > No view_parent");
-    view_parent.addClass("flex-col");
-    view_parent.insertBefore(page_views_el, view_parent.firstChild);
-  }
-  new page_views_default({
-    target: page_views_el,
-    props: { plugin }
+    page_views_el.empty();
+    if (mode === "preview") {
+      const view_parent = markdown_view.containerEl.querySelector(
+        ".markdown-reading-view > .markdown-preview-view"
+      );
+      if (!view_parent) {
+        return log.info(
+          "redraw_page_views > No view_parent (mode=preview)"
+        );
+      }
+      view_parent.insertBefore(page_views_el, view_parent.firstChild);
+    } else {
+      const view_parent = markdown_view.containerEl.querySelector(".cm-scroller");
+      if (!view_parent) {
+        return log.info(
+          "redraw_page_views > No view_parent (mode=source)"
+        );
+      }
+      view_parent.addClass("flex-col");
+      view_parent.insertBefore(page_views_el, view_parent.firstChild);
+    }
+    new page_views_default({
+      target: page_views_el,
+      props: { plugin, file_path: (_c = (_b = markdown_view.file) == null ? void 0 : _b.path) != null ? _c : "" }
+    });
   });
 };
 

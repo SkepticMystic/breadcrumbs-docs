@@ -11,4 +11,4 @@ If you want to quickly jump in and help, here are some bigger things that need d
 - [ ] Convert mermaid.live embedded charts to Mermaid codeblocks
 - [~] Add more images, especially for the [Views](Views/Views.md) section
 
-Other than that, you can search for "TODO" in the notes to find smaller.
+Other than that, you can search for "TODO" in the notes to find smaller things to do.

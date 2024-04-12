@@ -1,8 +1,18 @@
-Welcome to the Breadcrumbs wiki! Here you can find more detailed explanations of the various functions of Breadcrumbs.
+Welcome to the Breadcrumbs docs 🍞 Here you can find more detailed explanations of the various functions of the Obsidian [Breadcrumbs plugin](https://github.com/SkepticMystic/breadcrumbs).
 
-The Breadcrumbs plugin gives you a way to visualise a custom-built hierarchy in your Obsidian vault. You supply the structure, Breadcrumbs helps you leverage it.
+Breadcrumbs lets you add _directed edges_ to your Obsidian notes. You supply the structure, Breadcrumbs helps you leverage it.
 
 ## Quick Start
+
+- Open a new note
+- Add `up: [[another note]]` as a Properties field
+- Run the "**Breadcrumbs: Rebuild Graph**" command
+- Then run the "**Breadcrumbs: Open Matrix View**" command
+- See how Breadcrumbs points _up_ to `[[another note]]`
+
+In the terminology of Breadcrumbs, you've just used the "[[Typed Links|typed-link]]" edge builder to add an [[Explicit Edges|explicit edge]] from one note to another, using the `up` [[Hierarchies|hierarchy field]].
+
+## Overview
 
 - Setup your [[Hierarchies]]
 - Add structure to your notes using the various [[Explicit Edges|Explicit Edge Builders]]

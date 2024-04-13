@@ -13,7 +13,11 @@ child: ["[[B]]", "[[C]]"]
 
 This tells Breadcrumbs that the "parent" of the current note is "A", and that its two "children" are "B" and "C".
 
-[![](https://mermaid.ink/img/pako:eNotjj8LwjAUxL9KeIOk0A7-mTIIaldddMzySF5tsElKfEWk9Lub1t503O84bgQTLYGCposf02Ji8ah1EFlbeYtMhagq0WOiwNkdxU6eipXPxLSuswvYy3MhNuIgLyuHEjwlj87m-XHONHBLnjSobC2mlwYdptzDgeP9GwwoTgOVMPQWmWqHz4QeVIPdO6dkHcd0_f9dbk8_SUc5Cw?type=png)](https://mermaid.live/edit#pako:eNotjj8LwjAUxL9KeIOk0A7-mTIIaldddMzySF5tsElKfEWk9Lub1t503O84bgQTLYGCposf02Ji8ah1EFlbeYtMhagq0WOiwNkdxU6eipXPxLSuswvYy3MhNuIgLyuHEjwlj87m-XHONHBLnjSobC2mlwYdptzDgeP9GwwoTgOVMPQWmWqHz4QeVIPdO6dkHcd0_f9dbk8_SUc5Cw)
+```mermaid
+flowchart TD
+	1(Note) -- parent --> 2(A)
+	1 -- child --> 3(B) & 4(C)
+```
 
 ## Dataview Links
 

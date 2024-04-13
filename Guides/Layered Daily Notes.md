@@ -1,6 +1,4 @@
-This guide will show you how to create a layered hierarchy of dates leveraging your Daily Note structure:
-
-%% TODO: Add more content between these two paragraphs, so that the og display text doesn't have mermaid code in it %%
+This guide will show you how to create a layered hierarchy of Daily, Monthly, and Yearly Notes. The end result will allow you to quickly traverse through your Daily Notes, and see them in the context of the month and year they belong to.
 
 ```mermaid
 flowchart BT
@@ -48,7 +46,7 @@ month: '[[<% tp.date.now("YYYY-MM") %>]]'
 
 ## Tasks
 
-- [ ] 
+- [ ]
 ```
 
 > [!NOTE]
@@ -58,7 +56,7 @@ month: '[[<% tp.date.now("YYYY-MM") %>]]'
 
 Similarly, create a Monthly Note template with the following:
 
-~~~md
+````md
 ---
 year: '[[<% tp.date.now("YYYY") %>]]'
 next-month: '[[<% tp.date.now("YYYY-MM", "P1M") %>]]'
@@ -70,7 +68,7 @@ next-month: '[[<% tp.date.now("YYYY-MM", "P1M") %>]]'
 type: tree
 dirs: down
 ```
-~~~
+````
 
 Now each Monthly Note will point `up` to the corresponding Yearly Note, and `next` to the month after it. A [[Codeblocks|codeblock tree]] lists all daily notes from the current month.
 

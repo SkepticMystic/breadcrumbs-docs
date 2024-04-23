@@ -13,27 +13,21 @@ There are various ways this structure can be achieved. The method in this guide 
 
 ## Steps
 
-### 1. Setup up Your Hierarchies
+### 1. Setup up Your Fields
 
-We'll use some more specific hierarchy fields than the default `up`, `down`, `same`...
+We'll use some more specific fields than the default `up`, `down`, `same`... For Daily Notes, add the following fields:
 
-For Daily Notes, add the following hierarchy:
+- `month`
+- `days`
+- `tomorrow`
+- `yesterday`
 
-```yaml
-up: month
-down: days
-next: tomorrow
-prev: yesterday
-```
+And for Monthly Notes, add these fields:
 
-For Monthly Notes, add this hierarchy:
-
-```yaml
-up: year
-down: months
-next: next-month
-prev: prev-month
-```
+- `year
+- `months
+- `next-month
+- `prev-month
 
 ### 2. Daily Note Template
 
@@ -66,14 +60,14 @@ next-month: '[[<% tp.date.now("YYYY-MM", "P1M") %>]]'
 
 ```breadcrumbs
 type: tree
-dirs: down
+fields: days
 ```
 ````
 
 Now each Monthly Note will point `up` to the corresponding Yearly Note, and `next` to the month after it. A [[Codeblocks|codeblock tree]] lists all daily notes from the current month.
 
 > [!TIP]
-> We don't need to add `next-month` _and_ `prev-month`, since Breadcrumbs can infer that using the [[Other Implied Relations#Opposite Direction|opposite direction implied relation]].
+> We don't need to add `next-month` _and_ `prev-month`, since Breadcrumbs can infer that using the [[Transitive Implied Relations#Opposite Direction|opposite direction implied relation]].
 
 ### 4. Date Notes
 
@@ -93,14 +87,12 @@ You're all set up! Now each Daily Note will point upwards to the month and `tomo
 
 ### `day/events` Hierarchy
 
-Add an additional hierarchy _below_ Daily Notes, to capture events that happened on a particular day:
+Add some additional fields "below" the Daily Note fields, to capture events that happened on a particular day:
 
-```yaml
-up: day
-down: events
-```
+- `day`
+- `events`
 
-For example, in a university lecture note, you can point `up` to the day it happened:
+For example, in a university lecture note, you can point up to the `day` it happened:
 
 ```md
 ---

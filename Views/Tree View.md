@@ -4,4 +4,6 @@ The Tree View shows up on the side of the editor, and shows all path going in a 
 
 ## Settings
 
-- **Default Direction**: Choose the default direction to traverse in the Tree View.
+- **Sort**: Change the [[Reference#Edge Sorters|edge sorter]] used
+- **Field Groups**: Choose which [[Field Groups|field groups]] are shown
+- **Show Attributes**: Choose which [[Reference#Edge Attributes|edge attributes]] show

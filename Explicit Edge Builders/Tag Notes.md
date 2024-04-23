@@ -7,6 +7,9 @@ BC-tag-note-field: <field>
 
 Where `<field>` is one of your Breadcrumbs fields. This will tell Breadcrumbs to find all notes with the tag `#tag`, and add edges from the current note to those tagged notes using the field you specify.
 
+> [!NOTE]
+> You don't _have to_ add the leading `#`, Breadcrumbs will handle either case
+
 ## `BC-tag-note-exact`
 
 If you want to only add edges to notes that _exactly_ match the tag, you can add the `BC-tag-note-exact` field to the frontmatter of the tag note.

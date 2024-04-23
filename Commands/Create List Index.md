@@ -16,7 +16,8 @@ For example:
 
 ## Settings
 
-- **Hierarchy**: Choose the hierarchy to use for the list. "All" will traverse all hierarchies (while still keeping the paths separate).
-- **Direction**: Choose the direction to traverse in the list.
-- **Link Kind**: Choose the kind of links to use in the list. Options include "wiki", "markdown", and "none".
-- **Indent**: Choose the string to use for indentation in the list (e.g. ` `, `\t`).
+- **Field Groups**: Which [[Field Groups|field groups]] to include in the traversal
+- **Edge Sorter**: How to order the results
+- **Show Attributes**: Which [[Reference#Edge Attributes|edge attributes]] to show
+- **Indent**: Choose the string to use for indentation in the list (e.g. ` `, `\t`)
+- **Link Kind**: Choose the kind of links to use in the list. Options include "wiki", "markdown", and "none"

@@ -4,4 +4,5 @@ The Previous-Next View shows the immediate `previous` and `next` neighbours of t
 
 ## Settings
 
-- **Enable**: Show/hide the Previous/Next View at the top of your notes.
+- **Enable**: Show/hide the Previous/Next View at the top of your notes
+- **Field Groups**: Choose which [[Field Groups|field groups]] are shown on the left and right sides of the view

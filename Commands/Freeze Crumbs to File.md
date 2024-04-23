@@ -1,4 +1,4 @@
-This command takes all the _implied_ edges leaving the current note, and makes them explicit by writing them to the file in the format you choose.
+This command takes all the [[Implied Edge Builders|implied edges]] leaving the current note, and makes them explicit by writing them to the file in the format you choose.
 
 ## Settings
 

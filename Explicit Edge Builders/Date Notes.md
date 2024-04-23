@@ -6,6 +6,8 @@ flowchart LR
 ```
 
 
+Under the hood, Breadcrumbs takes the date of the current note and _adds one day_ to it. So the field you choose should reflect the "next" nature of this builder (as opposed to pointing to the date _before_ the current one).
+
 > [!TIP]
 > Refer to the Luxon documentation for the full list of date formats: <https://moment.github.io/luxon/#/parsing?id=table-of-tokens>.
 

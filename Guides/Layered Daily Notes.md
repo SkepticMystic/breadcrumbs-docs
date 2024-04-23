@@ -24,10 +24,10 @@ We'll use some more specific fields than the default `up`, `down`, `same`... For
 
 And for Monthly Notes, add these fields:
 
-- `year
-- `months
-- `next-month
-- `prev-month
+- `year`
+- `months`
+- `next-month`
+- `prev-month`
 
 ### 2. Daily Note Template
 

@@ -4,8 +4,23 @@ aliases:
   - field
 ---
 
-
 The starting point of Breadcrumbs is _fields_, which let you add _types_ to your links. For example the `[[Father]]` note could have a `child` field pointing to `[[Me]]`, and `[[Me]]` could have a `parent` field pointing to `[[Mother]]`.
+
+**Father.md**
+
+```md
+---
+child: "[[Me]]"
+---
+```
+
+**Me.md**
+
+```md
+%% Works with Dataview inline fields, too %%
+
+parent:: [[Mother]]
+```
 
 ```mermaid
 flowchart LR

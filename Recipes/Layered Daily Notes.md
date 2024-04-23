@@ -6,7 +6,7 @@ flowchart BT
 	D3(2024-05-07) & D4(2024-05-09) -->|month| M2(2024-05) -->|year| Y1(2024)
 ```
 
-There are various ways this structure can be achieved. The method in this guide will use Templates with [[Typed Links]] in them to point `up` to the Monthly Notes, and [[Regex Notes]] to
+There are various ways this structure can be achieved. The method in this guide will use the [Templater plugin](https://github.com/SilentVoid13/Templater) with Breadcrumbs [[Typed Links]] in them to point `up` from Daily Note to Monthly Note, and from Monthly to Yearly Notes.
 
 ## Steps
 
@@ -34,12 +34,11 @@ prev: prev-month
 
 ### 2. Daily Note Template
 
-To begin, we'll create a new daily note template (or add to your existing one). Each daily note will point `up` to the month it's in, and `next` to tomorrow's daily note
+Now to use these fields, let's create a Daily Note template (or add to your existing one). Each Daily Note will point `up` to the month it's in.
 
 ```md
 ---
-month: '[[<% tp.date.now("YYYY") %>]]'
-tomorrow: '[[<% tp.date.now("YYYY-MM", "P1M") %>]]'
+month: '[[<% tp.date.now("YYYY-MM") %>]]'
 ---
 
 ## Tasks
@@ -47,6 +46,25 @@ tomorrow: '[[<% tp.date.now("YYYY-MM", "P1M") %>]]'
 - [ ] 
 ```
 
+> [!NOTE]
+> Don't worry about the `tomorrow` field for now, we'll use that later.
+
+For the Monthly Note template, add the following:
+
+~~~md
+---
+year: '[[<% tp.date.now("YYYY") %>]]'
+---
+
+## Daily Notes
+
+```breadcrumbs
+type: tree
+dirs: down
+```
+~~~
+
+Here we point `up` to the Yearly Note, and create a [[Codeblocks|codeblock tree]] to list out all the daily notes in this month.
 ### 5. Extras/Advanced Usage
 
 ```yaml
@@ -55,4 +73,5 @@ down: event
 ```
 
 ---
+
 prev/next

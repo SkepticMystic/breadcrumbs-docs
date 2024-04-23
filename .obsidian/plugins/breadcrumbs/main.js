@@ -18083,6 +18083,7 @@ var get_regex_note_info = (plugin, metadata, path) => {
   let regex;
   try {
     regex = new RegExp(regex_str, flags || "");
+    log.debug(`get_regex_note_info > regex:`, regex);
   } catch (e) {
     return graph_build_fail({
       path,
@@ -18767,8 +18768,15 @@ var rebuild_graph = async (plugin) => {
       return { source, ...result };
     })
   );
-  for (let round = 1; round <= IMPLIED_RELATIONSHIP_MAX_ROUNDS; round++) {
-    Object.entries(add_implied_edges).forEach(([kind, fn]) => {
+  const max_implied_relationship_rounds = Math.max(
+    ...plugin.settings.hierarchies.flatMap(
+      (hierarchy) => Object.values(hierarchy.implied_relationships).map(
+        (imp) => imp.rounds
+      )
+    )
+  );
+  for (let round = 1; round <= max_implied_relationship_rounds; round++) {
+    Object.entries(add_implied_edges).forEach(([_kind, fn]) => {
       fn(graph, plugin, { round });
     });
     plugin.settings.custom_implied_relations.transitive.forEach(

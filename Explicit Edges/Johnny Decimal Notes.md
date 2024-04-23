@@ -6,7 +6,10 @@ If you use the [Johnny Decimal](https://johnnydecimal.com/) note-taking system, 
 
 Breadcrumbs will add edges from `10.20.a Task 1` to `10.20 Project A` to `10 Work` using the field you specify.
 
-[![](https://mermaid.ink/img/pako:eNpVjrEOgkAMhl-l6SQJEMDtBidHTYyauNzScEUQjiPH3WAI726VyQ5N83_Nn2_B2hlGhU9PUwunqx5BptyVRV4VOcGd5h7KBLIM4iT7ANXG4OLdi-vwD_cC4eF8n2CKlr2lzkj78q3VGFq2rFHJabihOASNelzllWJwt_dYowo-copxMhT42JF4WVQNDbOkbLrg_Hkz_omvH0ugOa0?type=png)](https://mermaid.live/edit#pako:eNpVjrEOgkAMhl-l6SQJEMDtBidHTYyauNzScEUQjiPH3WAI726VyQ5N83_Nn2_B2hlGhU9PUwunqx5BptyVRV4VOcGd5h7KBLIM4iT7ANXG4OLdi-vwD_cC4eF8n2CKlr2lzkj78q3VGFq2rFHJabihOASNelzllWJwt_dYowo-copxMhT42JF4WVQNDbOkbLrg_Hkz_omvH0ugOa0)
+```mermaid
+graph RL
+	1(10.20.a Task 1) -- up --> 2(10.20 Project 1) -- up --> 3(10 Work)
+```
 
 ## Settings
 

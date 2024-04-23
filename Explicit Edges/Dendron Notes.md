@@ -6,7 +6,10 @@ If you use the [Dendron](https://www.dendron.so/) note-taking system, Breadcrumb
 
 Breadcrumbs will add edges from `A.B.C` to `A.B` to `A` using the field you specify.
 
-[![](https://mermaid.ink/img/pako:eNpNjjELwjAQhf9KuKmFtqBuGYSqoy66ZjmSqw02TTkTREr_u1ddfMPj8fHueDPY6Ag0dEN82R45qfPVjEq0Kdrm0BxLVdcqT-J7tV3RP9gVbQkVBOKA3smbeb01kHoKZEBLdMgPA2ZcpIc5xdt7tKATZ6ogTw4TnTzeGQPoDoenUHI-Rb78dn3nLR98sTJV?type=png)](https://mermaid.live/edit#pako:eNpNjjELwjAQhf9KuKmFtqBuGYSqoy66ZjmSqw02TTkTREr_u1ddfMPj8fHueDPY6Ag0dEN82R45qfPVjEq0Kdrm0BxLVdcqT-J7tV3RP9gVbQkVBOKA3smbeb01kHoKZEBLdMgPA2ZcpIc5xdt7tKATZ6ogTw4TnTzeGQPoDoenUHI-Rb78dn3nLR98sTJV)
+```mermaid
+flowchart RL
+	1(A.B.C) -- up --> 2(A.B) -- up --> 3(A)
+```
 
 ## Settings
 

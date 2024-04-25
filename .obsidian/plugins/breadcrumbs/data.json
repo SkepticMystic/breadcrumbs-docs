@@ -1,48 +1,4 @@
 {
-  "hierarchies": [
-    {
-      "dirs": {
-        "up": [
-          "up"
-        ],
-        "same": [
-          "same"
-        ],
-        "down": [
-          "down"
-        ],
-        "next": [
-          "next"
-        ],
-        "prev": [
-          "prev"
-        ]
-      },
-      "implied_relationships": {
-        "opposite_direction": {
-          "rounds": 1
-        },
-        "self_is_sibling": {
-          "rounds": 0
-        },
-        "parents_sibling_is_parent": {
-          "rounds": 0
-        },
-        "cousin_is_sibling": {
-          "rounds": 0
-        },
-        "same_parent_is_sibling": {
-          "rounds": 0
-        },
-        "same_sibling_is_sibling": {
-          "rounds": 0
-        },
-        "siblings_parent_is_parent": {
-          "rounds": 0
-        }
-      }
-    }
-  ],
   "explicit_edge_sources": {
     "typed_link": {},
     "list_note": {
@@ -72,9 +28,6 @@
       "stretch_to_existing": false
     }
   },
-  "custom_implied_relations": {
-    "transitive": []
-  },
   "views": {
     "page": {
       "all": {
@@ -92,7 +45,11 @@
           "ext": false,
           "folder": false,
           "alias": false
-        }
+        },
+        "merge_fields": false,
+        "field_group_labels": [
+          "ups"
+        ]
       },
       "prev_next": {
         "enabled": true,
@@ -100,6 +57,14 @@
           "ext": false,
           "folder": false,
           "alias": false
+        },
+        "field_group_labels": {
+          "prev": [
+            "prevs"
+          ],
+          "next": [
+            "nexts"
+          ]
         }
       }
     },
@@ -109,11 +74,26 @@
           "ext": false,
           "folder": false,
           "alias": false
-        }
+        },
+        "show_attributes": [
+          "source",
+          "implied_kind",
+          "round"
+        ],
+        "edge_sort_id": {
+          "field": "basename",
+          "order": 1
+        },
+        "field_group_labels": [
+          "ups",
+          "downs",
+          "sames",
+          "nexts",
+          "prevs"
+        ]
       },
       "tree": {
         "collapse": false,
-        "default_dir": "down",
         "show_attributes": [],
         "edge_sort_id": {
           "field": "basename",
@@ -123,7 +103,11 @@
           "ext": false,
           "folder": false,
           "alias": false
-        }
+        },
+        "merge_fields": false,
+        "field_group_labels": [
+          "downs"
+        ]
       }
     },
     "codeblocks": {
@@ -156,7 +140,10 @@
           "ext": false,
           "alias": true,
           "folder": false
-        }
+        },
+        "fields": [],
+        "show_attributes": [],
+        "field_group_labels": []
       }
     },
     "freeze_implied_edges": {
@@ -172,12 +159,131 @@
     }
   },
   "suggestors": {
-    "hierarchy_field": {
+    "edge_field": {
       "enabled": false,
       "trigger": "."
     }
   },
   "debug": {
     "level": "INFO"
+  },
+  "is_dirty": false,
+  "edge_fields": [
+    {
+      "label": "up"
+    },
+    {
+      "label": "down"
+    },
+    {
+      "label": "same"
+    },
+    {
+      "label": "next"
+    },
+    {
+      "label": "prev"
+    }
+  ],
+  "edge_field_groups": [
+    {
+      "label": "ups",
+      "fields": [
+        "up"
+      ]
+    },
+    {
+      "label": "downs",
+      "fields": [
+        "down"
+      ]
+    },
+    {
+      "label": "sames",
+      "fields": [
+        "same"
+      ]
+    },
+    {
+      "label": "nexts",
+      "fields": [
+        "next"
+      ]
+    },
+    {
+      "label": "prevs",
+      "fields": [
+        "prev"
+      ]
+    },
+    {
+      "label": "hierarchy 1",
+      "fields": [
+        "up",
+        "down",
+        "same",
+        "next",
+        "prev"
+      ]
+    }
+  ],
+  "implied_relations": {
+    "transitive": [
+      {
+        "name": "Opposite Direction: up/down",
+        "rounds": 1,
+        "chain": [
+          {
+            "field": "up"
+          }
+        ],
+        "close_field": "down",
+        "close_reversed": true
+      },
+      {
+        "name": "Opposite Direction: down/up",
+        "rounds": 1,
+        "chain": [
+          {
+            "field": "down"
+          }
+        ],
+        "close_field": "up",
+        "close_reversed": true
+      },
+      {
+        "name": "Opposite Direction: same/same",
+        "rounds": 1,
+        "chain": [
+          {
+            "field": "same"
+          }
+        ],
+        "close_field": "same",
+        "close_reversed": true
+      },
+      {
+        "name": "Opposite Direction: next/prev",
+        "rounds": 1,
+        "chain": [
+          {
+            "field": "next"
+          }
+        ],
+        "close_field": "prev",
+        "close_reversed": true
+      },
+      {
+        "name": "Opposite Direction: prev/next",
+        "rounds": 1,
+        "chain": [
+          {
+            "field": "prev"
+          }
+        ],
+        "close_field": "next",
+        "close_reversed": true
+      }
+    ]
   }
 }

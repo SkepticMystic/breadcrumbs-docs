@@ -27,6 +27,7 @@
     "view:trail",
     "view:tree",
     "views",
-    "guide"
+    "guide",
+    "announcements"
   ]
 }

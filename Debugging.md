@@ -9,3 +9,13 @@ In increasing order of importance:
 - **WARN**: Notifies of problems that can be recovered from
 - **ERROR**: Unrecoverable errors
 - **FEAT**: Some features exist specifically to log to the console (e.g. the [[Graph Stats|graph stats command]])
+
+## Edge Build Errors
+
+When you [[Rebuild Graph|rebuild the graph]], it's possible the setup is invalid, so Breadcrumbs will warn you about these issues:
+
+![[Rebuild Graph Error Notice.png]]
+
+You can open the console (press `Ctrl + Shift + I`) to see a full, detailed list of the issues found:
+
+![[Rebuild Graph Console Errors.png]]

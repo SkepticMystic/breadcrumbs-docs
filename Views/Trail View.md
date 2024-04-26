@@ -6,8 +6,10 @@ The Trail View shows all paths going _up_ from the current note. In this example
 
 ## Settings
 
+Change under `Settings > Views > Page > Trail`
+
 - **Enable**: Show/hide the Trail View at the top of your notes.
-- **Field Groups**: Choose which [[Field Groups|field groups]] are shown
+- **Field Groups**: Choose which [[Field Groups|field groups]] are shown. By default, the `ups` group is shown
 - **Format**: Show the results in a Path/Grid format (the underlying data is still the same). %% TODO: Show example image %%
 - **Path Selection**: Show all paths, or only the shortest/longest path.
 - **Depth**: A maximum _depth_ of the paths. If the paths go longer than the max depth, slice them off.

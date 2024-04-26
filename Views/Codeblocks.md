@@ -1,8 +1,8 @@
-Breadcrumbs adds a new codeblock language, `breadcrumbs`. Currently, this can be used to render a tree of all paths in a given direction from the current note (similar to the [[Tree View]], or a [mermaid](https://mermaid.js.org) graph of the same data. The source is parsed as **YAML**:
+Breadcrumbs adds a new codeblock language, `breadcrumbs`. Currently, this can be used to render a tree of all paths in a given direction from the current note (similar to the [[Tree View]], or a [Mermaid](https://mermaid.js.org) graph of the same data. The source is parsed as **YAML**:
 
 ```yaml
 type: tree
-fields: down
+fields: [down]
 depth: [0, 3]
 sort: basename asc
 ```
@@ -22,7 +22,9 @@ The following fields can be added to the codeblock to customise the output. Opti
 How to visualise the results.
 
 - `tree` is similar to the [[Tree View]]
-- `mermaid` renders the results in a Mermaid graph
+- `mermaid` renders the results in a [Mermaid](https://mermaid.js.org) graph
+
+![[Codeblock Mermaid Binary Tree.png]]
 
 ### `start-note`
 
@@ -30,11 +32,15 @@ How to visualise the results.
 
 Override the starting note of the traversal. By default, the note that the codeblock is in will be used.
 
+_Example_: `start-note: folder/note.md`
+
 ### `fields`
 
 **Type**: `fields?: string[]`
 
 Filter edges by a list of your [[Edge Fields|edge fields]].
+
+_Example_: `fields: [up, same]`
 
 ### `field-groups`
 
@@ -42,21 +48,27 @@ Filter edges by a list of your [[Edge Fields|edge fields]].
 
 Similar to the [[#`fields`]] property, but you can select multiple [[Field Groups|field groups]] instead of individual fields.
 
+_Example_: `field-groups: [ups, downs]`
+
 ### `title`
 
 **Type**: `title?: string`
 
 Add a title above the codeblock.
 
+_Example_: `title: Breadcrumbs Codeblock`
+
 ### `depth`
 
 **Type**: `depth?: [number] | [number, number]`
 
-Filter edges by a depth range. For example:
+Filter edges by a depth range.
 
-- `[0, 3]` would show all paths 3 levels deep and shallower
-- `[1, 3]` would show all paths between 1 and 3 levels deep
-- `[3]` would show all paths _atleast_ 3 levels deep
+_Example_:
+
+- `depth: [0, 3]` would show all paths 3 levels deep and shallower
+- `depth: [1, 3]` would show all paths between 1 and 3 levels deep
+- `depth: [3]` would show all paths _atleast_ 3 levels deep
 
 By default, all depths are shown.
 
@@ -66,11 +78,15 @@ By default, all depths are shown.
 
 Flatten the tree results into a un-nested list.
 
+_Example_: `flat: true`
+
 ### `dataview-from`
 
 **Type**: `dataview-from?: string`
 
 Filter edges by a [Dataview](http://blacksmithgu.github.io/obsidian-dataview/) query.
+
+_Example_: `dataview-from: "#tag and !'Folder'"`
 
 ### `show-attributes`
 
@@ -78,23 +94,36 @@ Filter edges by a [Dataview](http://blacksmithgu.github.io/obsidian-dataview/) q
 
 Show specific [[Reference#Edge Attributes|edge attributes]] about each item in the result.
 
+_Example_: `show-attributes: [field, source]`
+
 ### `sort`
 
 **Type**: `sort?: <field> (asc) | desc`
 
 Order the results using a given [[Reference#Edge Sorters|edge sorter]].
 
+_example_: `sort: path desc`
+
 ### `mermaid-direction`
 
 **Type**: `mermaid-direction?: LR | RL | TB | BT`
 
-The direction of the mermaid graph (if `type: mermaid`).
+The [direction](https://mermaid.js.org/syntax/flowchart.html#direction) of the mermaid graph (if `type: mermaid`). Meaning:
+
+- `LR`: Left-to-right
+- `RL`: Right-to-left
+- `TB`: Top-to-bottom
+- `BT`: Bottom-to-top
+
+_Example_: `mermaid-direction: TB`
 
 ### `mermaid-renderer`
 
 **Type**: `mermaid-renderer?: (dagre) | elk`
 
-The renderer to use for the mermaid graph.
+The [renderer](https://mermaid.js.org/syntax/flowchart.html#renderer) to use for the mermaid graph.
 
 - `dagre` is the default, and is more stable.
 - `elk` is more experimental, but can handle larger graphs.
+
+_Example_: `mermaid-renderer: elk`

@@ -1,19 +1,25 @@
-_List Notes_ allow you to leverage your existing bullet list structure. You can turn a note into a list note by adding the following to your frontmatter:
+_List Notes_ allow you to leverage your existing bullet list structure. You can turn a note into a List Note by adding the following to your frontmatter:
 
 ```yaml
-BC-list-note-field: <field>
+---
+BC-list-note-field: "<field>"
+---
 ```
 
-Where `<field>` is one of your Breadcrumbs fields. The structure of a List Note is as follows:
+Where `<field>` is one of your [[Edge Fields|edge fields]]. The structure of a List Note is as follows:
 
 ```md
+---
+BC-list-note-field: "down"
+---
+
 - [[A]]
   - [[B]]
     - [[C]]
   - [[D]]
 ```
 
-In this example, `A` goes down to `B` and `D`, and `B`goes down to `C` (assuming the field you used is `down`).
+In this example, `A` goes down to `B` and `D`, and `B`goes down to `C`:
 
 ```mermaid
 flowchart TB
@@ -27,7 +33,7 @@ By default, each item in the list will use the `BC-list-note-field` value to add
 
 ```md
 ---
-BC-list-note-field: down
+BC-list-note-field: "down"
 ---
 
 - [[A]]
@@ -46,7 +52,10 @@ flowchart LR
 By default, the list note itself links to the top-level list items. You can exclude this behaviour by adding the `BC-list-note-exclude` field to the frontmatter of the list note.
 
 ```yaml
+---
+BC-list-note-field: "down"
 BC-list-note-exclude: true
+---
 ```
 
 ```mermaid
@@ -60,12 +69,24 @@ flowchart TB
 Normally, only the parent/child relationships are added. But you can also add edges based on the _neighbours_ of each list item. This is useful for adding sibling/next/prev relationships.
 
 ```yaml
-BC-list-note-neighbour-field: <field>
+---
+BC-list-note-neighbour-field: "<field>"
+---
 ```
 
-Where `<field>` is one of your Breadcrumbs fields.
+Where `<field>` is one of your [[Edge Fields|edge fields]]. For example, point `down` to all child items, and point `next` to each _neighbouring_ item
 
-In the first List Note example above, this would add edges from `B` to `D`.
+```md
+---
+BC-list-note-field: "down"
+BC-list-note-neighbour-field: "next"
+---
+
+- [[A]]
+  - [[B]]
+    - [[C]]
+  - [[D]]
+```
 
 ```mermaid
 flowchart TB
@@ -79,4 +100,4 @@ flowchart TB
 
 ## Settings
 
-- **Default Neighbour Field**: Choose a default field to use for the neighbour relationships. This is useful if you have a _lot_ of list notes, and don't want to add the `BC-list-note-neighbour-field` to each one.
+- **Default Neighbour Field**: Choose a default [[Edge Fields|field]] to use for the neighbour relationships. This is useful if you have a _lot_ of list notes, and don't want to add the `BC-list-note-neighbour-field` to each one.

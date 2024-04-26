@@ -4,7 +4,7 @@ If you use the [Dendron](https://www.dendron.so/) note-taking system, Breadcrumb
 - `A.B`
 - `A.B.C`
 
-Breadcrumbs will add edges from `A.B.C` to `A.B` to `A` using the field you specify.
+Breadcrumbs will add edges from `A.B.C` to `A.B` to `A` using the [[Edge Fields|field]] you specify.
 
 ```mermaid
 flowchart RL
@@ -17,6 +17,6 @@ flowchart RL
 ## Settings
 
 - **Enable**: Toggle Dendron notes on or off.
-- **Field**: Choose the field to use for the edges.
+- **Field**: Choose the [[Edge Fields|field]] to use for the edges.
 - **Delimiter**: Choose the delimiter you use in your Dendron notes. This is generally a period (`.`), but can be anything you like.
 - **Display Trimmed**: Choose to display the trimmed note name. This will remove the prefix from the note name, so `A.B.C` will be displayed as `C`.

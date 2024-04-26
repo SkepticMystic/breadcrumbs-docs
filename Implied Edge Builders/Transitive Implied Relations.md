@@ -7,12 +7,20 @@ flowchart LR
 	1 -. grandparent .-> 3
 ```
 
+In the settings for this relationship:
+
+![[transitive (parent, parent) -> grandparent.png]]
+
 ## Options
 
 - **Edge Chain**: The chain of fields required for the rule to match
+	- `[parent, parent]` in the above example
 - **Closing Field**: Once a match is found, which field closes the chain off
+	- `grandparent` in this example
 - **Close Reversed**: Whether the close the chain from start to finish, or vice versa
+	- `false` (or unchecked) in this example, because it closes from start to finish
 - **Rounds**: How many [[Implied Relation Rounds|rounds]] to run the rule for
+	- `1` in this example
 - **Name (optional)**: Give a label to the rule. By default, the `[field] -> close` syntax will be used.
 
 ## Examples
@@ -43,28 +51,28 @@ flowchart LR
 
 If A and B both share the same _sibling_, mark them as **siblings** as well.
 
-`[same, same] -> same`
+`[sibling, sibling] -> sibling`
 
 ### Siblings Parent is Parent
 
-If A and B are _siblings_, then make A's **parent** B's **parent** as well.
+If A and B are _siblings_, then make A's **parent** B's **parent**, as well.
 
-`[same, up] -> up`
+`[sibling, parent] -> parent`
 
-### Parents Sibling is Parent
+### Parents Sibling is Aunt/Uncle
 
-If A's _parent_ is B, and B is the _sibling_ of C, then make C the **parent** of A.
+If A's _parent_ is B, and B is the _sibling_ of C, then make C the **aunt/uncle** of A.
 
-`[up, same] -> up`
+`[parent, sibling] -> aunt-uncle`
 
 ### Parents Child is Sibling
 
 If A and B both have the same _parent_, mark them as **siblings**.
 
-`[up, down] -> same`
+`[parent, child] -> sibling`
 
 ### Cousin is Sibling
 
-If A and B are _cousins_, mark them as **siblings**.
+If A and B are _cousins_, mark them as such.
 
-`[up, same, down] -> same`
+`[parent, sibling, child] -> cousin`

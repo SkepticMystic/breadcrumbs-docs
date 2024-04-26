@@ -3,7 +3,7 @@ aliases:
   - implied
 ---
 
-By adding edges to the Breadcrumbs graph, you've created various [[Explicit Edge Builders|explicit]] relationships: "Note A is the _parent_ of note B", or "note C has 3 _children_: D, E, and F". But you've also created some _implied_ relationships. For example, if A is the _parent_ of B, then it's _implied_ that B is the **child** of A!
+By [[Explicit Edge Builders|adding edges]] to the Breadcrumbs graph, you've created various _explicit_ relationships: "Note A is the _parent_ of note B", or "note C has 3 _children_: D, E, and F". But this also _implies_ some relationships. For example, if `Father` is the _parent_ of `Daughter`, then it's _implied_ that `Daughter` is the **child** of `Father`!
 
 ```mermaid
 flowchart LR
@@ -13,5 +13,6 @@ flowchart LR
 
 ## Rule Kinds
 
+Currently, all implied relationships are added in the same way, using _transitive chains_ of [[Explicit Edge Builders|explicit]] edges:
+
 - [[Transitive Implied Relations]]
-	- [[Implied Relation Rounds]]

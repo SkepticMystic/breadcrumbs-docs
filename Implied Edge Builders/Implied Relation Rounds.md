@@ -14,7 +14,7 @@ flowchart LR
 	3(B) -- up --> 2
 ```
 
-If you have the [[Transitive Implied Relations#Parents Child is Sibling|Parent's Child is Sibling]] implied relation enabled, you may expect `A` and `B` to be marked as siblings, since they share the same parent. But in this example, they won't since there isn't a chain of `[up, down]` between the two. Instead, they both point `up`. To achieve the same effect, we can use the [[Other Implied Relations#Opposite Direction|Opposite Direction]] implied relation to add the `down` edges we need:
+If you have the [[Transitive Implied Relations#Parents Child is Sibling|Parent's Child is Sibling]] implied relation enabled, you may expect `A` and `B` to be marked as siblings, since they share the same parent. But in this example, they won't since there isn't a chain of `[up, down]` between the two. Instead, they both point `up`. To achieve the same effect, we can use the [[Transitive Implied Relations#Opposite Direction|opposite direction]] implied relation to add the `down` edges we need:
 
 ```mermaid
 flowchart LR

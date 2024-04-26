@@ -2,7 +2,7 @@ _Typed links_ are the most basic, manual way to add edges to the graph. They can
 
 ## Frontmatter Links
 
-In the YAML frontmatter of your note, you can add key/value pairs indicating a directed link to another note:
+In the YAML frontmatter of your note, you can add key/value pairs indicating a directed link to another note. The keys are your [[Edge Fields|edge fields]], while the values are links to different notes in your vault
 
 ```yaml
 ---
@@ -11,7 +11,7 @@ child: ["[[B]]", "[[C]]"]
 ---
 ```
 
-This tells Breadcrumbs that the "parent" of the current note is "A", and that its two "children" are "B" and "C".
+This tells Breadcrumbs that the `parent` of the current note is "A", and that its two `children` are "B" and "C".
 
 ```mermaid
 flowchart TD
@@ -23,12 +23,15 @@ flowchart TD
 
 If you have the [Dataview](https://github.com/blacksmithgu/obsidian-dataview) plugin enabled, you can use their format of metadata as well. In the _content_ of a note:
 
-```
+```md
 parent:: [[A]]
 child:: [[B]], [[C]]
 ```
 
 This creates the same structure as the [[Typed Links#Frontmatter Links|frontmatter links]] method above.
+
+> [!TIP]
+> Use the [[Edge Field Suggestor]] to speed up adding Dataview typed-links
 
 ### Markdown Links
 

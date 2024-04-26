@@ -30,7 +30,7 @@ How to visualise the results.
 
 **Type**: `start-note?: string`
 
-Override the starting note of the traversal. By default, the note that the codeblock is in will be used.
+Override the starting note of the [[Reference#Traversal|traversal]]. By default, the note that the codeblock is in will be used.
 
 _Example_: `start-note: folder/note.md`
 

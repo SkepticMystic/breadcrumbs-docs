@@ -16,7 +16,7 @@ For example:
 
 ## Settings
 
-- **Field Groups**: Which [[Field Groups|field groups]] to include in the traversal
+- **Field Groups**: Which [[Field Groups|field groups]] to include in the [[Reference#Traversal|traversal]]
 - **Edge Sorter**: How to order the results
 - **Show Attributes**: Which [[Reference#Edge Attributes|edge attributes]] to show
 - **Indent**: Choose the string to use for indentation in the list (e.g. ` `, `\t`)

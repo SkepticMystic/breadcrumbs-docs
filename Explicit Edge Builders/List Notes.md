@@ -6,7 +6,7 @@ BC-list-note-field: "<field>"
 ---
 ```
 
-Where `<field>` is one of your [[Edge Fields|edge fields]]. The structure of a List Note is as follows:
+Where `<field>` is one of your [[Edge Fields|edge fields]]. For example:
 
 ```md
 ---
@@ -40,7 +40,7 @@ BC-list-note-field: "down"
   - child [[B]]
 ```
 
-In this example, `List Note` -down-> `A`, but `A` -child-> `B`.
+Would give:
 
 ```mermaid
 flowchart LR

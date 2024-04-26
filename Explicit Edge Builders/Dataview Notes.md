@@ -7,9 +7,9 @@ BC-dataview-note-field: "<field>"
 ---
 ```
 
-Where `<query>` is a valid Dataview query, and `<field>` is one of your Breadcrumbs fields. Breadcrumbs will ask Dataview for all notes that match the query, and add edges from the current note to those notes using the field you specify.
+Where `<query>` is a valid Dataview query, and `<field>` is one of your [[Edge Fields|edge fields]]. Breadcrumbs will ask Dataview for all notes that match the query, and add edges from the current note to those notes using the field you specify.
 
-For example, the following query will add child edges from the current note to all notes that contain the tag `#tag` and are in the folder "Folder":
+For example, the following query will add `child` edges from the current note to all notes that contain the tag `#tag` and are in the folder "Folder":
 
 ```yaml
 ---

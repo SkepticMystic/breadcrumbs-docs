@@ -9,5 +9,5 @@ Change under `Settings > Views > Tree`
 - **Sort**: Change the [[Reference#Edge Sorters|edge sorter]] used
 - **Show Attributes**: Choose which [[Reference#Edge Attributes|edge attributes]] show
 - **Collapse**: Fold the nested paths
-- **Merge Fields**: Traverse each [[Edge Fields|field]] separately, or all together
+- **Merge Fields**: [[Reference#Traversal|Traverse]] each [[Edge Fields|field]] separately, or all together
 - **Field Groups**: Choose which [[Field Groups|field groups]] are shown

@@ -4,12 +4,12 @@ aliases:
   - explicit
 ---
 
-The _explicit edge builders_ are the various ways of adding edges to the Breadcrumbs graph. Some are more manual, while others automatically leverage the existing structure in your notes.
+The _edge builders_ add edges to the [[Reference#Graph|Breadcrumbs graph]] using the various sources of structure that already exist in your notes/vault. Some are relatively manual, like [[Typed Links]], while others are more flexible and automated, like [[Date Notes]].
 
 > [!TIP]
-> They are referred to as "_explicit_" because they're derived from the explicit structure in your notes/vault. Whereas the [[Implied Edge Builders]] _build off of other explicit edges_.
+> Any edge added by one of these edge builders is referred to as "_explicit_", because it came from existing structure in your vault (e.g. tags, folders, links, dates, etc.). In contrast, "_[[Implied Edge Builders|implied]]_" edges are _not_ explicitly defined in your notes' metadata, but can be deduced _from your explicit edges_, based on the [[Transitive Implied Relations]] rules you've added in your settings
 
-The different explicit edge builders include:
+The different edge builders include:
 
 - [[Typed Links]]
 - [[Tag Notes]]

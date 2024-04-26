@@ -1,8 +1,11 @@
-Not only can you enable/disable each kind of implied relation, you can change how many _rounds_ to go through to detect them. This is useful to add implied relations _based on other implied relations_.
+By default, each of your [[Transitive Implied Relations]] runs once, meaning they only consider the [[Explicit Edge Builders|explicit]] edges in the graph when deciding if the rule matches. But in some cases, you may want the implied rule to consider _other implied edges_, that's where **rounds** come in:
 
-- Setting rounds to `0` disables that kind.
-- Setting it to `1` will add that kind of implied relation, only considering _explicit_ edges.
-- Setting it to `2` will add that kind of implied relation again, considering _explicit_ edges and _previously added_ implied edges. And so on...
+- Setting rounds to `0` disables the rule.
+- Setting it to `1` will run the rule once, only considering _explicit_ edges.
+- Setting it to `2` will run the rule again, considering _explicit_ edges and _previously added_ implied edges.
+
+> [!TIP]
+> You can think of increasing the rounds as making all _previous_ implied relations **explicit**.
 
 ## Example
 
@@ -34,6 +37,3 @@ graph LR
 	2 -- down --> 3
 	1 -. same .-> 3
 ```
-
-> [!TIP]
-> You can think of increasing the rounds as making all _previous_ implied relations **explicit**. So, in the above example, increasing the rounds of the Parents' Child is Sibling relation to `2` would make the `down` edge between `A` and `B` explicit (because they were added in round `1`), and then detect the sibling relationship.

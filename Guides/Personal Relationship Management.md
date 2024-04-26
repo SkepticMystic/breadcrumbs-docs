@@ -55,7 +55,7 @@ After adding some implied relations, [[Rebuild Graph|rebuild the graph]], and ch
 
 ### 4. Visualising
 
-After you've expanded your people-graph, you can visualise it using a [[Codeblocks|mermaid codeblock]]. The following shows _all_ relationships from the perspective of the current note (resulting in a potentially huge graph ⚠️):
+After you've expanded your people-graph, you can visualise it using a [[Codeblocks|mermaid codeblock]]. The following shows _all_ relationships from the perspective of the current note (⚠️ resulting in a potentially huge graph):
 
 ```
 type: mermaid

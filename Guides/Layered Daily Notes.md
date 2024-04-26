@@ -1,4 +1,4 @@
-This guide will show you how to create a layered hierarchy of Daily, Monthly, and Yearly Notes. The end result will allow you to quickly traverse through your Daily Notes, and see them in the context of the month and year they belong to.
+This guide will show you how to create a layered hierarchy of Daily, Monthly, and Yearly Notes. The end result will allow you to quickly move through your Daily Notes, and see them in the context of the month and year they belong to.
 
 ```mermaid
 flowchart BT
@@ -118,8 +118,8 @@ You're all set up! Now each Daily Note will point upwards to the month and `tomo
 
 Add some additional fields "below" the Daily Note fields, to capture events that happened on a particular day:
 
-- `day`
-- `events`
+- `day`: Point up to the day something happened
+- `events`: Point down from a particular day to an event that happened
 
 For example, in a university lecture note, you can point up to the `day` it happened:
 
@@ -133,7 +133,7 @@ day: [[2024-04-13]]
 ...
 ```
 
-Then when viewing the Daily Note `[[2024-04-13]]`, you'll see all the events that happened on that day in the [[Matrix View]] or [[Tree View]] pointing `down`.
+Then when viewing the Daily Note `[[2024-04-13]]`, you'll see all the events that happened on that day in the [[Matrix View]] or [[Tree View]] pointing down with the `events` field.
 
 ### Moving around between Daily Notes and other Layers
 

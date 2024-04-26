@@ -14269,6 +14269,12 @@ var FIELDS = [
   "mermaid-direction",
   "mermaid-renderer"
 ];
+var zod_not_string_msg = (field, received) => `Expected a string, but received: \`${received}\`. Try wrapping the value in quotes.
+**Valid Example**: \`${field}: "${received}"\``;
+var zod_invalid_enum_msg = (field, options, received) => `Expected one of the following options: ${quote_join(options, "`", ", or ")}, but received: \`${received}\`.
+**Valid Example**: \`${field}: ${options[0]}\``;
+var zod_not_array_msg = (field, options, received) => `This field is now expected to be a YAML list, but received: \`${received}\`. Try wrapping it in square brackets.
+**Valid Example**: \`${field}: [${options.slice(0, 2).join(", ")}]\`, or possibly: \`${field}: [${received}]\``;
 var dynamic_enum_schema = (options) => z.string().superRefine((f, ctx) => {
   if (options.includes(f)) {
     return true;
@@ -14281,97 +14287,187 @@ var dynamic_enum_schema = (options) => z.string().superRefine((f, ctx) => {
     return false;
   }
 });
-var codeblock_schema = (data) => z.object({
-  flat: z.boolean().default(false),
-  collapse: z.boolean().default(false),
-  "merge-fields": z.boolean().default(false),
-  title: z.string().optional(),
-  "start-note": z.string().optional(),
-  "dataview-from": z.string().optional(),
-  content: z.enum(["open", "closed"]).optional(),
-  type: z.enum(["tree", "mermaid"]).default("tree"),
-  "mermaid-renderer": z.enum(Mermaid.RENDERERS).optional(),
-  "mermaid-direction": z.enum(Mermaid.DIRECTIONS).optional(),
-  "show-attributes": z.array(z.enum(EDGE_ATTRIBUTES)).optional(),
-  fields: z.array(
-    dynamic_enum_schema(data.edge_fields.map((f) => f.label))
-  ).optional(),
-  "field-groups": z.array(
-    dynamic_enum_schema(data.field_groups.map((f) => f.label))
-  ).optional(),
-  depth: z.union([
-    z.tuple([z.number().min(0)]).transform((v) => [v[0], Infinity]),
-    z.tuple([z.number().min(0), z.number()])
-  ]).default([0, Infinity]).refine((v) => {
-    var _a;
-    return v[0] <= ((_a = v.at(1)) != null ? _a : Infinity);
-  }, {
-    message: "Min is greater than max"
-  }),
-  sort: z.preprocess(
-    (v) => {
-      if (typeof v === "string") {
-        const [field, order] = v.split(" ");
-        return { field, order: order != null ? order : "asc" };
-      } else {
-        return v;
-      }
-    },
-    z.object({
-      field: dynamic_enum_schema([
-        ...SIMPLE_EDGE_SORT_FIELDS,
-        ...data.edge_fields.map(
-          (f) => `neighbour-field:${f.label}`
-        )
-      ]),
-      order: z.union([
-        z.enum(["asc", "desc"]),
-        // Something very weird happening...
-        // If a note has two codeblocks, the one that gets rendered first seems to override config in the other?
-        // So when the `sort` field of the second comes in for parsing,
-        // It's already been transformed, and so sort.order is a number, not a string...
-        z.literal(1),
-        z.literal(-1)
-      ]).transform(
-        (v) => v === "asc" ? 1 : v === "desc" ? -1 : v
-      )
-    })
-  ).default({
-    order: 1,
-    field: "basename"
-  })
-}).passthrough().default({}).transform((options) => {
-  if (options["field-groups"]) {
-    const field_labels = resolve_field_group_labels(
-      data.field_groups,
-      options["field-groups"]
-    );
-    if (options.fields) {
-      options.fields = remove_duplicates(
-        options.fields.concat(field_labels)
-      );
-    } else {
-      options.fields = field_labels;
-    }
-  }
-  return options;
+var BOOLEANS = [true, false];
+var dynamic_enum_array_schema = (field, options, received) => z.array(dynamic_enum_schema(options), {
+  invalid_type_error: zod_not_array_msg(field, options, received)
 });
+var codeblock_schema = (input, data) => {
+  var _a, _b, _c;
+  const field_labels = data.edge_fields.map((f) => f.label);
+  const group_labels = data.field_groups.map((f) => f.label);
+  return z.object({
+    title: z.string({
+      message: zod_not_string_msg(
+        //
+        "title",
+        input["title"]
+      )
+    }).optional(),
+    "start-note": z.string({
+      message: zod_not_string_msg(
+        "start-note",
+        input["start-note"]
+      )
+    }).optional(),
+    "dataview-from": z.string({
+      message: zod_not_string_msg(
+        "dataview-from",
+        input["dataview-from"]
+      )
+    }).optional(),
+    flat: z.boolean({
+      message: zod_invalid_enum_msg(
+        "flat",
+        BOOLEANS,
+        input["flat"]
+      )
+    }).default(false),
+    collapse: z.boolean({
+      message: zod_invalid_enum_msg(
+        "collapse",
+        BOOLEANS,
+        input["collapse"]
+      )
+    }).default(false),
+    "merge-fields": z.boolean({
+      message: zod_invalid_enum_msg(
+        "merge-fields",
+        BOOLEANS,
+        input["merge-fields"]
+      )
+    }).default(false),
+    content: z.enum(["open", "closed"], {
+      message: zod_invalid_enum_msg(
+        "content",
+        ["open", "closed"],
+        input["content"]
+      )
+    }).optional(),
+    type: z.enum(["tree", "mermaid"], {
+      message: zod_invalid_enum_msg(
+        "type",
+        ["tree", "mermaid"],
+        input["type"]
+      )
+    }).default("tree"),
+    "mermaid-renderer": z.enum(Mermaid.RENDERERS, {
+      message: zod_invalid_enum_msg(
+        "mermaid-renderer",
+        Mermaid.RENDERERS,
+        input["mermaid-renderer"]
+      )
+    }).optional(),
+    "mermaid-direction": z.enum(Mermaid.DIRECTIONS, {
+      message: zod_invalid_enum_msg(
+        "mermaid-direction",
+        Mermaid.DIRECTIONS,
+        input["mermaid-direction"]
+      )
+    }).optional(),
+    "show-attributes": z.array(z.enum(EDGE_ATTRIBUTES), {
+      message: zod_not_array_msg(
+        "show-attributes",
+        EDGE_ATTRIBUTES,
+        input["show-attributes"]
+      )
+    }).optional(),
+    fields: dynamic_enum_array_schema(
+      "fields",
+      field_labels,
+      input["fields"]
+    ).optional(),
+    "field-groups": dynamic_enum_array_schema(
+      "field-groups",
+      group_labels,
+      input["field-groups"]
+    ).optional(),
+    depth: z.array(z.number().min(0), {
+      invalid_type_error: `Expected a YAML list of one or two numbers, but received: \`${input["depth"]}\`. Try wrapping it in square brackets.
+**Valid Example**: \`depth: [0]\`, or \`depth: [0, 3]\`, or possibly: \`depth: [${input["depth"]}]\``
+    }).min(
+      1,
+      `At least one item is required, but received: \`[${input["depth"]}]\`.
+**Valid Example**: \`depth: [0]\`, or \`depth: [0, 3]\``
+    ).max(
+      2,
+      `Maximum of two items allowed, but received: \`[${(_a = input["depth"]) == null ? void 0 : _a.join(", ")}]\`.
+**Valid Example**: \`depth: [${(_b = input["depth"]) == null ? void 0 : _b[0]}]\`, or possibly \`depth: [${(_c = input["depth"]) == null ? void 0 : _c.slice(0, 2).join(", ")}]\``
+    ).transform((v) => {
+      if (v.length === 1)
+        return [v[0], Infinity];
+      else
+        return v;
+    }).refine((v) => v[0] <= v[1], {
+      message: "Minimum depth cannot be greater than maximum depth."
+    }).default([0, Infinity]),
+    sort: z.preprocess(
+      (v) => {
+        if (typeof v === "string") {
+          const [field, order] = v.split(" ");
+          return { field, order: order != null ? order : "asc" };
+        } else {
+          return v;
+        }
+      },
+      z.object({
+        // TODO: Use a custom zod schema to retain string template literals here
+        // https://github.com/colinhacks/zod?tab=readme-ov-file#custom-schemas
+        field: dynamic_enum_schema([
+          ...SIMPLE_EDGE_SORT_FIELDS,
+          ...data.edge_fields.map(
+            (f) => `neighbour-field:${f.label}`
+          )
+        ]),
+        order: z.union([
+          z.enum(["asc", "desc"]),
+          // Something very weird happening...
+          // If a note has two codeblocks, the one that gets rendered first seems to override config in the other?
+          // So when the `sort` field of the second comes in for parsing,
+          // It's already been transformed, and so sort.order is a number, not a string...
+          z.literal(1),
+          z.literal(-1)
+        ]).transform(
+          (v) => v === "asc" ? 1 : v === "desc" ? -1 : v
+        )
+      })
+    ).default({
+      order: 1,
+      field: "basename"
+    })
+  }).passthrough().default({}).transform((options) => {
+    if (options["field-groups"]) {
+      const field_labels2 = resolve_field_group_labels(
+        data.field_groups,
+        options["field-groups"]
+      );
+      if (options.fields) {
+        options.fields = remove_duplicates(
+          options.fields.concat(field_labels2)
+        );
+      } else {
+        options.fields = field_labels2;
+      }
+    }
+    return options;
+  });
+};
 var parse_source = (source, data) => {
+  var _a;
   const errors = [];
   let yaml;
   try {
-    yaml = (0, import_obsidian.parseYaml)(source);
+    yaml = (_a = (0, import_obsidian.parseYaml)(source)) != null ? _a : {};
     log.debug("Codeblock > parsed_yaml >", yaml);
   } catch (error) {
     log.error("Codeblock > parse_source > parseYaml.error", error);
     errors.push({
       path: "yaml",
       code: "invalid_yaml",
-      message: "Invalid YAML. Check the console for more information."
+      message: "Invalid YAML. Check the console for more information (press `Ctrl + Shift + I` to open the console)."
     });
     return { parsed: null, errors };
   }
-  const parsed = codeblock_schema(data).safeParse(yaml != null ? yaml : {});
+  const parsed = codeblock_schema(yaml, data).safeParse(yaml);
   if (!parsed.success) {
     errors.push(
       ...parsed.error.issues.map((issue) => ({
@@ -14392,7 +14488,11 @@ var parse_source = (source, data) => {
     errors.push({
       path: "yaml",
       code: "invalid_yaml",
-      message: `Unknown field(s) - ${quote_join(invalid_fields)}. Options: ${quote_join(FIELDS, "'", " | ")}`
+      message: zod_invalid_enum_msg(
+        "yaml",
+        FIELDS,
+        invalid_fields.join(", ")
+      )
     });
   }
   return { parsed: parsed.data, errors };
@@ -14414,7 +14514,7 @@ var postprocess_options = (source_path, parsed, errors, plugin) => {
       errors.push({
         path: "start-note",
         code: "invalid_field_value",
-        message: `Invalid 'start-note', could not find: "${normalised}"`
+        message: `Could not find note \`${normalised}\` in your vault. Try a different path.`
       });
     }
   }
@@ -14428,7 +14528,7 @@ var postprocess_options = (source_path, parsed, errors, plugin) => {
       errors.push({
         path: "dataview-from",
         code: "invalid_field_value",
-        message: `Invalid dataview-from: "${parsed["dataview-from"]}". You can also use \`app.plugins.plugins.dataview.api.pages\` to test your query.`
+        message: `The given query \`${parsed["dataview-from"]}\` is not a valid Dataview query. You can use \`app.plugins.plugins.dataview.api.pages\` to test your query in the console (press \`Ctrl + Shift + I\` to open the console).`
       });
     }
   }
@@ -22863,7 +22963,7 @@ function outro_and_destroy_block(block, lookup) {
     lookup.delete(block.key);
   });
 }
-function update_keyed_each(old_blocks, dirty, get_key, dynamic, ctx, list, lookup, node, destroy, create_each_block13, next, get_context) {
+function update_keyed_each(old_blocks, dirty, get_key, dynamic, ctx, list, lookup, node, destroy, create_each_block12, next, get_context) {
   let o = old_blocks.length;
   let n2 = list.length;
   let i = o;
@@ -22880,7 +22980,7 @@ function update_keyed_each(old_blocks, dirty, get_key, dynamic, ctx, list, looku
     const key = get_key(child_ctx);
     let block = lookup.get(key);
     if (!block) {
-      block = create_each_block13(key, child_ctx);
+      block = create_each_block12(key, child_ctx);
       block.c();
     } else if (dynamic) {
       updates.push(() => block.p(child_ctx, dirty));
@@ -23046,7 +23146,7 @@ function make_dirty(component, i) {
   }
   component.$$.dirty[i / 31 | 0] |= 1 << i % 31;
 }
-function init(component, options, instance53, create_fragment53, not_equal, props, append_styles2 = null, dirty = [-1]) {
+function init(component, options, instance54, create_fragment54, not_equal, props, append_styles2 = null, dirty = [-1]) {
   const parent_component = current_component;
   set_current_component(component);
   const $$ = component.$$ = {
@@ -23072,7 +23172,7 @@ function init(component, options, instance53, create_fragment53, not_equal, prop
   };
   append_styles2 && append_styles2($$.root);
   let ready = false;
-  $$.ctx = instance53 ? instance53(component, options.props || {}, (i, ret, ...rest) => {
+  $$.ctx = instance54 ? instance54(component, options.props || {}, (i, ret, ...rest) => {
     const value = rest.length ? rest[0] : ret;
     if ($$.ctx && not_equal($$.ctx[i], $$.ctx[i] = value)) {
       if (!$$.skip_bound && $$.bound[i])
@@ -23085,7 +23185,7 @@ function init(component, options, instance53, create_fragment53, not_equal, prop
   $$.update();
   ready = true;
   run_all($$.before_update);
-  $$.fragment = create_fragment53 ? create_fragment53($$.ctx) : false;
+  $$.fragment = create_fragment54 ? create_fragment54($$.ctx) : false;
   if (options.target) {
     if (options.hydrate) {
       start_hydrating();
@@ -28741,7 +28841,7 @@ var EdgeFieldSettings_default = EdgeFieldSettings;
 // src/components/settings/TransitiveImpliedRelations.svelte
 var import_obsidian10 = require("obsidian");
 
-// src/components/Mermaid/MermaidDiagram.svelte
+// src/components/obsidian/RenderMarkdown.svelte
 var import_obsidian9 = require("obsidian");
 
 // src/stores/active_file.ts
@@ -28798,45 +28898,54 @@ var active_file_store = {
   refresh: (app) => store.set(app.workspace.getActiveFile())
 };
 
-// src/components/Mermaid/MermaidDiagram.svelte
+// src/components/obsidian/RenderMarkdown.svelte
 function create_fragment23(ctx) {
   let div;
+  let div_class_value;
   return {
     c() {
       div = element("div");
-      attr(div, "class", "BC-mermaid-graph");
+      attr(div, "class", div_class_value = "markdown-rendered " + /*cls*/
+      ctx[0]);
     },
     m(target, anchor) {
       insert(target, div, anchor);
-      ctx[4](div);
+      ctx[5](div);
     },
-    p: noop,
+    p(ctx2, [dirty]) {
+      if (dirty & /*cls*/
+      1 && div_class_value !== (div_class_value = "markdown-rendered " + /*cls*/
+      ctx2[0])) {
+        attr(div, "class", div_class_value);
+      }
+    },
     i: noop,
     o: noop,
     d(detaching) {
       if (detaching) {
         detach(div);
       }
-      ctx[4](null);
+      ctx[5](null);
     }
   };
 }
 function instance23($$self, $$props, $$invalidate) {
   let $active_file_store;
-  component_subscribe($$self, active_file_store, ($$value) => $$invalidate(5, $active_file_store = $$value));
-  let { mermaid } = $$props;
-  let { source_path = void 0 } = $$props;
+  component_subscribe($$self, active_file_store, ($$value) => $$invalidate(6, $active_file_store = $$value));
+  let { cls = "" } = $$props;
+  let { markdown } = $$props;
   let { plugin } = $$props;
+  let { source_path = void 0 } = $$props;
   let el;
-  const render_mermaid = (mermaid2, el2) => {
+  const render = (markdown2, el2) => {
     var _a;
     if (!el2)
       return;
-    log.debug("rendering mermaid");
+    log.debug("rendering markdown");
     el2.empty();
     import_obsidian9.MarkdownRenderer.render(
       plugin.app,
-      wrap_in_codeblock(mermaid2, "mermaid"),
+      markdown2,
       el2,
       (_a = source_path !== null && source_path !== void 0 ? source_path : $active_file_store === null || $active_file_store === void 0 ? void 0 : $active_file_store.path) !== null && _a !== void 0 ? _a : "",
       plugin
@@ -28845,8 +28954,121 @@ function instance23($$self, $$props, $$invalidate) {
   function div_binding($$value) {
     binding_callbacks[$$value ? "unshift" : "push"](() => {
       el = $$value;
-      $$invalidate(0, el);
+      $$invalidate(1, el);
     });
+  }
+  $$self.$$set = ($$props2) => {
+    if ("cls" in $$props2)
+      $$invalidate(0, cls = $$props2.cls);
+    if ("markdown" in $$props2)
+      $$invalidate(2, markdown = $$props2.markdown);
+    if ("plugin" in $$props2)
+      $$invalidate(3, plugin = $$props2.plugin);
+    if ("source_path" in $$props2)
+      $$invalidate(4, source_path = $$props2.source_path);
+  };
+  $$self.$$.update = () => {
+    if ($$self.$$.dirty & /*markdown, el*/
+    6) {
+      $:
+        render(markdown, el);
+    }
+  };
+  return [cls, el, markdown, plugin, source_path, div_binding];
+}
+var RenderMarkdown = class extends SvelteComponent {
+  constructor(options) {
+    super();
+    init(this, options, instance23, create_fragment23, safe_not_equal, {
+      cls: 0,
+      markdown: 2,
+      plugin: 3,
+      source_path: 4
+    });
+  }
+};
+var RenderMarkdown_default = RenderMarkdown;
+
+// src/components/Mermaid/MermaidDiagram.svelte
+function create_fragment24(ctx) {
+  let rendermarkdown;
+  let updating_plugin;
+  let current;
+  function rendermarkdown_plugin_binding(value) {
+    ctx[3](value);
+  }
+  let rendermarkdown_props = {
+    source_path: (
+      /*source_path*/
+      ctx[2]
+    ),
+    markdown: wrap_in_codeblock(
+      /*mermaid*/
+      ctx[1],
+      "mermaid"
+    )
+  };
+  if (
+    /*plugin*/
+    ctx[0] !== void 0
+  ) {
+    rendermarkdown_props.plugin = /*plugin*/
+    ctx[0];
+  }
+  rendermarkdown = new RenderMarkdown_default({ props: rendermarkdown_props });
+  binding_callbacks.push(() => bind(rendermarkdown, "plugin", rendermarkdown_plugin_binding));
+  return {
+    c() {
+      create_component(rendermarkdown.$$.fragment);
+    },
+    m(target, anchor) {
+      mount_component(rendermarkdown, target, anchor);
+      current = true;
+    },
+    p(ctx2, [dirty]) {
+      const rendermarkdown_changes = {};
+      if (dirty & /*source_path*/
+      4)
+        rendermarkdown_changes.source_path = /*source_path*/
+        ctx2[2];
+      if (dirty & /*mermaid*/
+      2)
+        rendermarkdown_changes.markdown = wrap_in_codeblock(
+          /*mermaid*/
+          ctx2[1],
+          "mermaid"
+        );
+      if (!updating_plugin && dirty & /*plugin*/
+      1) {
+        updating_plugin = true;
+        rendermarkdown_changes.plugin = /*plugin*/
+        ctx2[0];
+        add_flush_callback(() => updating_plugin = false);
+      }
+      rendermarkdown.$set(rendermarkdown_changes);
+    },
+    i(local) {
+      if (current)
+        return;
+      transition_in(rendermarkdown.$$.fragment, local);
+      current = true;
+    },
+    o(local) {
+      transition_out(rendermarkdown.$$.fragment, local);
+      current = false;
+    },
+    d(detaching) {
+      destroy_component(rendermarkdown, detaching);
+    }
+  };
+}
+function instance24($$self, $$props, $$invalidate) {
+  let { mermaid } = $$props;
+  let { source_path = void 0 } = $$props;
+  let { plugin } = $$props;
+  function rendermarkdown_plugin_binding(value) {
+    plugin = value;
+    $$invalidate(0, plugin);
   }
   $$self.$$set = ($$props2) => {
     if ("mermaid" in $$props2)
@@ -28854,21 +29076,14 @@ function instance23($$self, $$props, $$invalidate) {
     if ("source_path" in $$props2)
       $$invalidate(2, source_path = $$props2.source_path);
     if ("plugin" in $$props2)
-      $$invalidate(3, plugin = $$props2.plugin);
+      $$invalidate(0, plugin = $$props2.plugin);
   };
-  $$self.$$.update = () => {
-    if ($$self.$$.dirty & /*mermaid, el*/
-    3) {
-      $:
-        render_mermaid(mermaid, el);
-    }
-  };
-  return [el, mermaid, source_path, plugin, div_binding];
+  return [plugin, mermaid, source_path, rendermarkdown_plugin_binding];
 }
 var MermaidDiagram = class extends SvelteComponent {
   constructor(options) {
     super();
-    init(this, options, instance23, create_fragment23, safe_not_equal, { mermaid: 1, source_path: 2, plugin: 3 });
+    init(this, options, instance24, create_fragment24, safe_not_equal, { mermaid: 1, source_path: 2, plugin: 0 });
   }
 };
 var MermaidDiagram_default = MermaidDiagram;
@@ -28928,7 +29143,7 @@ function create_if_block3(ctx) {
     }
   };
 }
-function create_fragment24(ctx) {
+function create_fragment25(ctx) {
   let current_block_type_index;
   let if_block;
   let if_block_anchor;
@@ -28992,7 +29207,7 @@ function create_fragment24(ctx) {
     }
   };
 }
-function instance24($$self, $$props, $$invalidate) {
+function instance25($$self, $$props, $$invalidate) {
   let { open } = $$props;
   $$self.$$set = ($$props2) => {
     if ("open" in $$props2)
@@ -29003,7 +29218,7 @@ function instance24($$self, $$props, $$invalidate) {
 var ChevronOpener = class extends SvelteComponent {
   constructor(options) {
     super();
-    init(this, options, instance24, create_fragment24, safe_not_equal, { open: 0 });
+    init(this, options, instance25, create_fragment25, safe_not_equal, { open: 0 });
   }
 };
 var ChevronOpener_default = ChevronOpener;
@@ -29053,7 +29268,7 @@ function create_each_block3(ctx) {
     }
   };
 }
-function create_fragment25(ctx) {
+function create_fragment26(ctx) {
   let select;
   let option;
   let t;
@@ -29152,7 +29367,7 @@ function create_fragment25(ctx) {
     }
   };
 }
-function instance25($$self, $$props, $$invalidate) {
+function instance26($$self, $$props, $$invalidate) {
   let { fields } = $$props;
   let { undefine_on_change = true } = $$props;
   let { field = void 0 } = $$props;
@@ -29176,7 +29391,7 @@ function instance25($$self, $$props, $$invalidate) {
 var EdgeFieldSelector = class extends SvelteComponent {
   constructor(options) {
     super();
-    init(this, options, instance25, create_fragment25, safe_not_equal, {
+    init(this, options, instance26, create_fragment26, safe_not_equal, {
       fields: 1,
       undefine_on_change: 2,
       field: 0
@@ -30104,7 +30319,7 @@ function create_each_block4(key_1, ctx) {
     }
   };
 }
-function create_fragment26(ctx) {
+function create_fragment27(ctx) {
   let div3;
   let p;
   let t0;
@@ -30400,7 +30615,7 @@ function create_fragment26(ctx) {
     }
   };
 }
-function instance26($$self, $$props, $$invalidate) {
+function instance27($$self, $$props, $$invalidate) {
   let { plugin } = $$props;
   const settings = plugin.settings;
   let filter = "";
@@ -30546,7 +30761,7 @@ function instance26($$self, $$props, $$invalidate) {
 var TransitiveImpliedRelations = class extends SvelteComponent {
   constructor(options) {
     super();
-    init(this, options, instance26, create_fragment26, safe_not_equal, { plugin: 0 }, add_css);
+    init(this, options, instance27, create_fragment27, safe_not_equal, { plugin: 0 }, add_css);
   }
 };
 var TransitiveImpliedRelations_default = TransitiveImpliedRelations;
@@ -30892,7 +31107,7 @@ var FieldGroupsSelectorMenu = ({
 };
 
 // src/components/selector/FieldGroupLabelsSelector.svelte
-function create_fragment27(ctx) {
+function create_fragment28(ctx) {
   let button;
   let groupicon;
   let current;
@@ -30956,7 +31171,7 @@ function create_fragment27(ctx) {
     }
   };
 }
-function instance27($$self, $$props, $$invalidate) {
+function instance28($$self, $$props, $$invalidate) {
   let { cls = "" } = $$props;
   let { field_group_labels } = $$props;
   let { edge_field_groups } = $$props;
@@ -30980,7 +31195,7 @@ function instance27($$self, $$props, $$invalidate) {
 var FieldGroupLabelsSelector = class extends SvelteComponent {
   constructor(options) {
     super();
-    init(this, options, instance27, create_fragment27, safe_not_equal, {
+    init(this, options, instance28, create_fragment28, safe_not_equal, {
       cls: 1,
       field_group_labels: 0,
       edge_field_groups: 2
@@ -30990,7 +31205,7 @@ var FieldGroupLabelsSelector = class extends SvelteComponent {
 var FieldGroupLabelsSelector_default = FieldGroupLabelsSelector;
 
 // src/components/settings/SettingItem.svelte
-function create_fragment28(ctx) {
+function create_fragment29(ctx) {
   let div4;
   let div2;
   let div0;
@@ -31110,7 +31325,7 @@ function create_fragment28(ctx) {
     }
   };
 }
-function instance28($$self, $$props, $$invalidate) {
+function instance29($$self, $$props, $$invalidate) {
   let { $$slots: slots = {}, $$scope } = $$props;
   let { name } = $$props;
   let { description } = $$props;
@@ -31127,7 +31342,7 @@ function instance28($$self, $$props, $$invalidate) {
 var SettingItem = class extends SvelteComponent {
   constructor(options) {
     super();
-    init(this, options, instance28, create_fragment28, safe_not_equal, { name: 0, description: 1 });
+    init(this, options, instance29, create_fragment29, safe_not_equal, { name: 0, description: 1 });
   }
 };
 var SettingItem_default = SettingItem;
@@ -31193,7 +31408,7 @@ function create_default_slot20(ctx) {
     }
   };
 }
-function create_fragment29(ctx) {
+function create_fragment30(ctx) {
   let settingitem;
   let current;
   settingitem = new SettingItem_default({
@@ -31249,7 +31464,7 @@ function create_fragment29(ctx) {
     }
   };
 }
-function instance29($$self, $$props, $$invalidate) {
+function instance30($$self, $$props, $$invalidate) {
   let { name = "Field Groups" } = $$props;
   let { description = "Select the field groups to use for this traversal." } = $$props;
   let { field_group_labels } = $$props;
@@ -31289,7 +31504,7 @@ function instance29($$self, $$props, $$invalidate) {
 var FieldGroupLabelsSettingItem = class extends SvelteComponent {
   constructor(options) {
     super();
-    init(this, options, instance29, create_fragment29, safe_not_equal, {
+    init(this, options, instance30, create_fragment30, safe_not_equal, {
       name: 1,
       description: 2,
       field_group_labels: 0,
@@ -31556,7 +31771,7 @@ function create_if_block5(ctx) {
     }
   };
 }
-function create_fragment30(ctx) {
+function create_fragment31(ctx) {
   let button;
   let current_block_type_index;
   let if_block;
@@ -31642,7 +31857,7 @@ function create_fragment30(ctx) {
     }
   };
 }
-function instance30($$self, $$props, $$invalidate) {
+function instance31($$self, $$props, $$invalidate) {
   let { edge_sort_id } = $$props;
   let { exclude_fields = [] } = $$props;
   let { cls = "" } = $$props;
@@ -31666,7 +31881,7 @@ function instance30($$self, $$props, $$invalidate) {
 var EdgeSortIdSelector = class extends SvelteComponent {
   constructor(options) {
     super();
-    init(this, options, instance30, create_fragment30, safe_not_equal, {
+    init(this, options, instance31, create_fragment31, safe_not_equal, {
       edge_sort_id: 0,
       exclude_fields: 1,
       cls: 2
@@ -31727,7 +31942,7 @@ function create_default_slot21(ctx) {
     }
   };
 }
-function create_fragment31(ctx) {
+function create_fragment32(ctx) {
   let settingitem;
   let current;
   settingitem = new SettingItem_default({
@@ -31769,7 +31984,7 @@ function create_fragment31(ctx) {
     }
   };
 }
-function instance31($$self, $$props, $$invalidate) {
+function instance32($$self, $$props, $$invalidate) {
   let { edge_sort_id } = $$props;
   const dispatch = createEventDispatcher();
   function edgesortidselector_edge_sort_id_binding(value) {
@@ -31794,7 +32009,7 @@ function instance31($$self, $$props, $$invalidate) {
 var EdgeSortIdSettingItem = class extends SvelteComponent {
   constructor(options) {
     super();
-    init(this, options, instance31, create_fragment31, safe_not_equal, { edge_sort_id: 0 });
+    init(this, options, instance32, create_fragment32, safe_not_equal, { edge_sort_id: 0 });
   }
 };
 var EdgeSortIdSettingItem_default = EdgeSortIdSettingItem;
@@ -31838,7 +32053,7 @@ var ShowAttributesSelectorMenu = ({
 };
 
 // src/components/selector/ShowAttributesSelectorMenu.svelte
-function create_fragment32(ctx) {
+function create_fragment33(ctx) {
   let button;
   let filejson;
   let current;
@@ -31902,7 +32117,7 @@ function create_fragment32(ctx) {
     }
   };
 }
-function instance32($$self, $$props, $$invalidate) {
+function instance33($$self, $$props, $$invalidate) {
   let { show_attributes } = $$props;
   let { exclude_attributes = [] } = $$props;
   let { cls = "" } = $$props;
@@ -31929,7 +32144,7 @@ function instance32($$self, $$props, $$invalidate) {
 var ShowAttributesSelectorMenu_1 = class extends SvelteComponent {
   constructor(options) {
     super();
-    init(this, options, instance32, create_fragment32, safe_not_equal, {
+    init(this, options, instance33, create_fragment33, safe_not_equal, {
       show_attributes: 0,
       exclude_attributes: 1,
       cls: 2
@@ -31999,7 +32214,7 @@ function create_default_slot22(ctx) {
     }
   };
 }
-function create_fragment33(ctx) {
+function create_fragment34(ctx) {
   let settingitem;
   let current;
   settingitem = new SettingItem_default({
@@ -32041,7 +32256,7 @@ function create_fragment33(ctx) {
     }
   };
 }
-function instance33($$self, $$props, $$invalidate) {
+function instance34($$self, $$props, $$invalidate) {
   let { show_attributes } = $$props;
   let { exclude_attributes = [] } = $$props;
   const dispatch = createEventDispatcher();
@@ -32073,7 +32288,7 @@ function instance33($$self, $$props, $$invalidate) {
 var ShowAttributesSettingItem = class extends SvelteComponent {
   constructor(options) {
     super();
-    init(this, options, instance33, create_fragment33, safe_not_equal, {
+    init(this, options, instance34, create_fragment34, safe_not_equal, {
       show_attributes: 0,
       exclude_attributes: 1
     });
@@ -32215,7 +32430,7 @@ var import_obsidian22 = require("obsidian");
 
 // src/components/ObsidianLink.svelte
 var import_obsidian21 = require("obsidian");
-function create_fragment34(ctx) {
+function create_fragment35(ctx) {
   let span;
   let t;
   let span_class_value;
@@ -32347,7 +32562,7 @@ function create_fragment34(ctx) {
     }
   };
 }
-function instance34($$self, $$props, $$invalidate) {
+function instance35($$self, $$props, $$invalidate) {
   let $active_file_store;
   component_subscribe($$self, active_file_store, ($$value) => $$invalidate(5, $active_file_store = $$value));
   let { path } = $$props;
@@ -32409,7 +32624,7 @@ function instance34($$self, $$props, $$invalidate) {
 var ObsidianLink = class extends SvelteComponent {
   constructor(options) {
     super();
-    init(this, options, instance34, create_fragment34, safe_not_equal, {
+    init(this, options, instance35, create_fragment35, safe_not_equal, {
       path: 0,
       display: 1,
       resolved: 2,
@@ -32421,7 +32636,7 @@ var ObsidianLink = class extends SvelteComponent {
 var ObsidianLink_default = ObsidianLink;
 
 // src/components/EdgeLink.svelte
-function create_fragment35(ctx) {
+function create_fragment36(ctx) {
   let obsidianlink;
   let current;
   obsidianlink = new ObsidianLink_default({
@@ -32495,7 +32710,7 @@ function create_fragment35(ctx) {
     }
   };
 }
-function instance35($$self, $$props, $$invalidate) {
+function instance36($$self, $$props, $$invalidate) {
   let { edge } = $$props;
   let { plugin } = $$props;
   let { show_node_options } = $$props;
@@ -32520,7 +32735,7 @@ function instance35($$self, $$props, $$invalidate) {
 var EdgeLink = class extends SvelteComponent {
   constructor(options) {
     super();
-    init(this, options, instance35, create_fragment35, safe_not_equal, {
+    init(this, options, instance36, create_fragment36, safe_not_equal, {
       edge: 0,
       plugin: 1,
       show_node_options: 4,
@@ -32828,7 +33043,7 @@ function create_each_block5(ctx) {
     }
   };
 }
-function create_fragment36(ctx) {
+function create_fragment37(ctx) {
   var _a, _b, _c, _d;
   let div;
   let current;
@@ -32878,7 +33093,7 @@ function create_fragment36(ctx) {
     }
   };
 }
-function instance36($$self, $$props, $$invalidate) {
+function instance37($$self, $$props, $$invalidate) {
   let { file_path } = $$props;
   let { plugin } = $$props;
   const { field_group_labels, show_node_options } = plugin.settings.views.page.prev_next;
@@ -32899,7 +33114,7 @@ function instance36($$self, $$props, $$invalidate) {
 var PrevNextView = class extends SvelteComponent {
   constructor(options) {
     super();
-    init(this, options, instance36, create_fragment36, safe_not_equal, { file_path: 3, plugin: 0 }, add_css2);
+    init(this, options, instance37, create_fragment37, safe_not_equal, { file_path: 3, plugin: 0 }, add_css2);
   }
 };
 var PrevNextView_default = PrevNextView;
@@ -32959,7 +33174,7 @@ function create_if_block7(ctx) {
     }
   };
 }
-function create_fragment37(ctx) {
+function create_fragment38(ctx) {
   let button;
   let current_block_type_index;
   let if_block;
@@ -33059,7 +33274,7 @@ function create_fragment37(ctx) {
     }
   };
 }
-function instance37($$self, $$props, $$invalidate) {
+function instance38($$self, $$props, $$invalidate) {
   let { cls = "" } = $$props;
   let { merge_fields } = $$props;
   const click_handler = () => $$invalidate(0, merge_fields = !merge_fields);
@@ -33074,7 +33289,7 @@ function instance37($$self, $$props, $$invalidate) {
 var MergeFieldsButton = class extends SvelteComponent {
   constructor(options) {
     super();
-    init(this, options, instance37, create_fragment37, safe_not_equal, { cls: 1, merge_fields: 0 });
+    init(this, options, instance38, create_fragment38, safe_not_equal, { cls: 1, merge_fields: 0 });
   }
 };
 var MergeFieldsButton_default = MergeFieldsButton;
@@ -33299,7 +33514,7 @@ function create_each_block6(ctx) {
     }
   };
 }
-function create_fragment38(ctx) {
+function create_fragment39(ctx) {
   let div;
   let current;
   let each_value = ensure_array_like(
@@ -33389,7 +33604,7 @@ function create_fragment38(ctx) {
     }
   };
 }
-function instance38($$self, $$props, $$invalidate) {
+function instance39($$self, $$props, $$invalidate) {
   let { plugin } = $$props;
   let { all_paths } = $$props;
   const reversed = all_paths.map((path) => [...path].reverse());
@@ -33406,7 +33621,7 @@ function instance38($$self, $$props, $$invalidate) {
 var TrailViewGrid = class extends SvelteComponent {
   constructor(options) {
     super();
-    init(this, options, instance38, create_fragment38, safe_not_equal, { plugin: 0, all_paths: 3 }, add_css3);
+    init(this, options, instance39, create_fragment39, safe_not_equal, { plugin: 0, all_paths: 3 }, add_css3);
   }
 };
 var TrailViewGrid_default = TrailViewGrid;
@@ -33613,7 +33828,7 @@ function create_each_block7(ctx) {
     }
   };
 }
-function create_fragment39(ctx) {
+function create_fragment40(ctx) {
   let div;
   let current;
   let each_value = ensure_array_like(
@@ -33694,7 +33909,7 @@ function create_fragment39(ctx) {
     }
   };
 }
-function instance39($$self, $$props, $$invalidate) {
+function instance40($$self, $$props, $$invalidate) {
   let { plugin } = $$props;
   let { all_paths } = $$props;
   const reversed = all_paths.map((path) => [...path].reverse());
@@ -33709,7 +33924,7 @@ function instance39($$self, $$props, $$invalidate) {
 var TrailViewPath = class extends SvelteComponent {
   constructor(options) {
     super();
-    init(this, options, instance39, create_fragment39, safe_not_equal, { plugin: 0, all_paths: 2 }, add_css4);
+    init(this, options, instance40, create_fragment40, safe_not_equal, { plugin: 0, all_paths: 2 }, add_css4);
   }
 };
 var TrailViewPath_default = TrailViewPath;
@@ -34332,7 +34547,7 @@ function create_key_block3(ctx) {
     }
   };
 }
-function create_fragment40(ctx) {
+function create_fragment41(ctx) {
   let div;
   let previous_key = (
     /*sorted_paths*/
@@ -34383,7 +34598,7 @@ function create_fragment40(ctx) {
     }
   };
 }
-function instance40($$self, $$props, $$invalidate) {
+function instance41($$self, $$props, $$invalidate) {
   let edge_field_labels;
   let all_paths;
   let selected_paths;
@@ -34492,7 +34707,7 @@ function instance40($$self, $$props, $$invalidate) {
 var TrailView = class extends SvelteComponent {
   constructor(options) {
     super();
-    init(this, options, instance40, create_fragment40, safe_not_equal, { plugin: 0, file_path: 4 });
+    init(this, options, instance41, create_fragment41, safe_not_equal, { plugin: 0, file_path: 4 });
   }
 };
 var TrailView_default = TrailView;
@@ -34664,7 +34879,7 @@ function create_if_block_14(ctx) {
     }
   };
 }
-function create_fragment41(ctx) {
+function create_fragment42(ctx) {
   let show_if = Object.values(
     /*enabled_views*/
     ctx[2]
@@ -34707,7 +34922,7 @@ function create_fragment41(ctx) {
     }
   };
 }
-function instance41($$self, $$props, $$invalidate) {
+function instance42($$self, $$props, $$invalidate) {
   let { plugin } = $$props;
   let { file_path } = $$props;
   const enabled_views = {
@@ -34725,7 +34940,7 @@ function instance41($$self, $$props, $$invalidate) {
 var Page_views = class extends SvelteComponent {
   constructor(options) {
     super();
-    init(this, options, instance41, create_fragment41, safe_not_equal, { plugin: 0, file_path: 1 });
+    init(this, options, instance42, create_fragment42, safe_not_equal, { plugin: 0, file_path: 1 });
   }
 };
 var page_views_default = Page_views;
@@ -35179,7 +35394,7 @@ var BreadcrumbsSettingTab = class extends import_obsidian24.PluginSettingTab {
 var import_obsidian25 = require("obsidian");
 
 // src/components/button/RebuildGraphButton.svelte
-function create_fragment42(ctx) {
+function create_fragment43(ctx) {
   let button;
   let rotateccw;
   let current;
@@ -35243,7 +35458,7 @@ function create_fragment42(ctx) {
     }
   };
 }
-function instance42($$self, $$props, $$invalidate) {
+function instance43($$self, $$props, $$invalidate) {
   let { cls = "" } = $$props;
   let { plugin } = $$props;
   const click_handler = () => plugin.refresh();
@@ -35258,13 +35473,13 @@ function instance42($$self, $$props, $$invalidate) {
 var RebuildGraphButton = class extends SvelteComponent {
   constructor(options) {
     super();
-    init(this, options, instance42, create_fragment42, safe_not_equal, { cls: 0, plugin: 1 });
+    init(this, options, instance43, create_fragment43, safe_not_equal, { cls: 0, plugin: 1 });
   }
 };
 var RebuildGraphButton_default = RebuildGraphButton;
 
 // src/components/obsidian/TreeItemFlair.svelte
-function create_fragment43(ctx) {
+function create_fragment44(ctx) {
   let div;
   let span;
   let t;
@@ -35324,7 +35539,7 @@ function create_fragment43(ctx) {
     }
   };
 }
-function instance43($$self, $$props, $$invalidate) {
+function instance44($$self, $$props, $$invalidate) {
   let { cls = "" } = $$props;
   let { label = "" } = $$props;
   let { aria_label = "" } = $$props;
@@ -35341,7 +35556,7 @@ function instance43($$self, $$props, $$invalidate) {
 var TreeItemFlair = class extends SvelteComponent {
   constructor(options) {
     super();
-    init(this, options, instance43, create_fragment43, safe_not_equal, { cls: 0, label: 1, aria_label: 2 });
+    init(this, options, instance44, create_fragment44, safe_not_equal, { cls: 0, label: 1, aria_label: 2 });
   }
 };
 var TreeItemFlair_default = TreeItemFlair;
@@ -35549,7 +35764,7 @@ function create_key_block4(ctx) {
     }
   };
 }
-function create_fragment44(ctx) {
+function create_fragment45(ctx) {
   let details;
   let summary;
   let div0;
@@ -35703,7 +35918,7 @@ function create_fragment44(ctx) {
     }
   };
 }
-function instance44($$self, $$props, $$invalidate) {
+function instance45($$self, $$props, $$invalidate) {
   let { edges } = $$props;
   let { field } = $$props;
   let { plugin } = $$props;
@@ -35741,7 +35956,7 @@ function instance44($$self, $$props, $$invalidate) {
 var MatrixEdgeField = class extends SvelteComponent {
   constructor(options) {
     super();
-    init(this, options, instance44, create_fragment44, safe_not_equal, {
+    init(this, options, instance45, create_fragment45, safe_not_equal, {
       edges: 0,
       field: 1,
       plugin: 2,
@@ -36073,7 +36288,7 @@ function create_key_block5(ctx) {
     }
   };
 }
-function create_fragment45(ctx) {
+function create_fragment46(ctx) {
   let div2;
   let div1;
   let div0;
@@ -36269,7 +36484,7 @@ function create_fragment45(ctx) {
     }
   };
 }
-function instance45($$self, $$props, $$invalidate) {
+function instance46($$self, $$props, $$invalidate) {
   let edge_field_labels;
   let grouped_out_edges;
   let sort;
@@ -36329,7 +36544,7 @@ function instance45($$self, $$props, $$invalidate) {
 var Matrix = class extends SvelteComponent {
   constructor(options) {
     super();
-    init(this, options, instance45, create_fragment45, safe_not_equal, { plugin: 0 });
+    init(this, options, instance46, create_fragment46, safe_not_equal, { plugin: 0 });
   }
 };
 var Matrix_default = Matrix;
@@ -36402,140 +36617,101 @@ var BCAPI = class {
 var import_obsidian27 = require("obsidian");
 
 // src/components/codeblocks/CodeblockErrors.svelte
-function get_each_context11(ctx, list, i) {
-  const child_ctx = ctx.slice();
-  child_ctx[1] = list[i];
-  return child_ctx;
-}
 function create_if_block13(ctx) {
-  let p;
+  let p0;
   let t1;
-  let ul;
-  let each_value = ensure_array_like(
-    /*errors*/
-    ctx[0]
-  );
-  let each_blocks = [];
-  for (let i = 0; i < each_value.length; i += 1) {
-    each_blocks[i] = create_each_block11(get_each_context11(ctx, each_value, i));
-  }
-  return {
-    c() {
-      p = element("p");
-      p.textContent = "Breadcrumbs Codeblock Errors";
-      t1 = space();
-      ul = element("ul");
-      for (let i = 0; i < each_blocks.length; i += 1) {
-        each_blocks[i].c();
-      }
-      attr(p, "class", "text-warning text-lg font-semibold");
-      attr(ul, "class", "BC-codeblock-tree-errors");
-    },
-    m(target, anchor) {
-      insert(target, p, anchor);
-      insert(target, t1, anchor);
-      insert(target, ul, anchor);
-      for (let i = 0; i < each_blocks.length; i += 1) {
-        if (each_blocks[i]) {
-          each_blocks[i].m(ul, null);
-        }
-      }
-    },
-    p(ctx2, dirty) {
-      if (dirty & /*errors*/
-      1) {
-        each_value = ensure_array_like(
-          /*errors*/
-          ctx2[0]
-        );
-        let i;
-        for (i = 0; i < each_value.length; i += 1) {
-          const child_ctx = get_each_context11(ctx2, each_value, i);
-          if (each_blocks[i]) {
-            each_blocks[i].p(child_ctx, dirty);
-          } else {
-            each_blocks[i] = create_each_block11(child_ctx);
-            each_blocks[i].c();
-            each_blocks[i].m(ul, null);
-          }
-        }
-        for (; i < each_blocks.length; i += 1) {
-          each_blocks[i].d(1);
-        }
-        each_blocks.length = each_value.length;
-      }
-    },
-    d(detaching) {
-      if (detaching) {
-        detach(p);
-        detach(t1);
-        detach(ul);
-      }
-      destroy_each(each_blocks, detaching);
-    }
-  };
-}
-function create_each_block11(ctx) {
-  let li;
-  let code;
-  let t0_value = (
-    /*error*/
-    ctx[1].path + ""
-  );
-  let t0;
-  let t1;
-  let span;
-  let t2;
-  let t3_value = (
-    /*error*/
-    ctx[1].message + ""
-  );
+  let p1;
   let t3;
+  let div;
+  let rendermarkdown;
   let t4;
+  let hr;
+  let t5;
+  let p2;
+  let current;
+  rendermarkdown = new RenderMarkdown_default({
+    props: {
+      plugin: (
+        /*plugin*/
+        ctx[0]
+      ),
+      markdown: (
+        /*markdown*/
+        ctx[2]
+      )
+    }
+  });
   return {
     c() {
-      li = element("li");
-      code = element("code");
-      t0 = text(t0_value);
+      p0 = element("p");
+      p0.textContent = "Breadcrumbs Codeblock Errors";
       t1 = space();
-      span = element("span");
-      t2 = text(": ");
-      t3 = text(t3_value);
+      p1 = element("p");
+      p1.textContent = "The codeblock YAML has errors in the following keys/properties:";
+      t3 = space();
+      div = element("div");
+      create_component(rendermarkdown.$$.fragment);
       t4 = space();
-      attr(code, "class", "inline");
+      hr = element("hr");
+      t5 = space();
+      p2 = element("p");
+      p2.innerHTML = `See the <a target="_blank" class="external-link" href="https://publish.obsidian.md/breadcrumbs-docs/Views/Codeblocks">codeblock docs</a> for more info`;
+      attr(p0, "class", "text-warning text-lg font-semibold");
+      attr(div, "class", "BC-codeblock-errors");
     },
     m(target, anchor) {
-      insert(target, li, anchor);
-      append(li, code);
-      append(code, t0);
-      append(li, t1);
-      append(li, span);
-      append(span, t2);
-      append(span, t3);
-      append(li, t4);
+      insert(target, p0, anchor);
+      insert(target, t1, anchor);
+      insert(target, p1, anchor);
+      insert(target, t3, anchor);
+      insert(target, div, anchor);
+      mount_component(rendermarkdown, div, null);
+      insert(target, t4, anchor);
+      insert(target, hr, anchor);
+      insert(target, t5, anchor);
+      insert(target, p2, anchor);
+      current = true;
     },
     p(ctx2, dirty) {
-      if (dirty & /*errors*/
-      1 && t0_value !== (t0_value = /*error*/
-      ctx2[1].path + ""))
-        set_data(t0, t0_value);
-      if (dirty & /*errors*/
-      1 && t3_value !== (t3_value = /*error*/
-      ctx2[1].message + ""))
-        set_data(t3, t3_value);
+      const rendermarkdown_changes = {};
+      if (dirty & /*plugin*/
+      1)
+        rendermarkdown_changes.plugin = /*plugin*/
+        ctx2[0];
+      rendermarkdown.$set(rendermarkdown_changes);
+    },
+    i(local) {
+      if (current)
+        return;
+      transition_in(rendermarkdown.$$.fragment, local);
+      current = true;
+    },
+    o(local) {
+      transition_out(rendermarkdown.$$.fragment, local);
+      current = false;
     },
     d(detaching) {
       if (detaching) {
-        detach(li);
+        detach(p0);
+        detach(t1);
+        detach(p1);
+        detach(t3);
+        detach(div);
+        detach(t4);
+        detach(hr);
+        detach(t5);
+        detach(p2);
       }
+      destroy_component(rendermarkdown);
     }
   };
 }
-function create_fragment46(ctx) {
+function create_fragment47(ctx) {
   let if_block_anchor;
+  let current;
   let if_block = (
     /*errors*/
-    ctx[0].length && create_if_block13(ctx)
+    ctx[1].length && create_if_block13(ctx)
   );
   return {
     c() {
@@ -36547,26 +36723,43 @@ function create_fragment46(ctx) {
       if (if_block)
         if_block.m(target, anchor);
       insert(target, if_block_anchor, anchor);
+      current = true;
     },
     p(ctx2, [dirty]) {
       if (
         /*errors*/
-        ctx2[0].length
+        ctx2[1].length
       ) {
         if (if_block) {
           if_block.p(ctx2, dirty);
+          if (dirty & /*errors*/
+          2) {
+            transition_in(if_block, 1);
+          }
         } else {
           if_block = create_if_block13(ctx2);
           if_block.c();
+          transition_in(if_block, 1);
           if_block.m(if_block_anchor.parentNode, if_block_anchor);
         }
       } else if (if_block) {
-        if_block.d(1);
-        if_block = null;
+        group_outros();
+        transition_out(if_block, 1, 1, () => {
+          if_block = null;
+        });
+        check_outros();
       }
     },
-    i: noop,
-    o: noop,
+    i(local) {
+      if (current)
+        return;
+      transition_in(if_block);
+      current = true;
+    },
+    o(local) {
+      transition_out(if_block);
+      current = false;
+    },
     d(detaching) {
       if (detaching) {
         detach(if_block_anchor);
@@ -36576,18 +36769,22 @@ function create_fragment46(ctx) {
     }
   };
 }
-function instance46($$self, $$props, $$invalidate) {
+function instance47($$self, $$props, $$invalidate) {
+  let { plugin } = $$props;
   let { errors } = $$props;
+  const markdown = errors.map((e) => `- \`${e.path}\`: ${e.message}`).join("\n");
   $$self.$$set = ($$props2) => {
+    if ("plugin" in $$props2)
+      $$invalidate(0, plugin = $$props2.plugin);
     if ("errors" in $$props2)
-      $$invalidate(0, errors = $$props2.errors);
+      $$invalidate(1, errors = $$props2.errors);
   };
-  return [errors];
+  return [plugin, errors, markdown];
 }
 var CodeblockErrors = class extends SvelteComponent {
   constructor(options) {
     super();
-    init(this, options, instance46, create_fragment46, safe_not_equal, { errors: 0 });
+    init(this, options, instance47, create_fragment47, safe_not_equal, { plugin: 0, errors: 1 });
   }
 };
 var CodeblockErrors_default = CodeblockErrors;
@@ -36669,7 +36866,7 @@ function create_if_block14(ctx) {
     }
   };
 }
-function create_fragment47(ctx) {
+function create_fragment48(ctx) {
   let button;
   let current_block_type_index;
   let if_block;
@@ -36775,7 +36972,7 @@ function create_fragment47(ctx) {
     }
   };
 }
-function instance47($$self, $$props, $$invalidate) {
+function instance48($$self, $$props, $$invalidate) {
   let { cls = "" } = $$props;
   let { text: text2 } = $$props;
   let { aria_label = "Copy to Clipboard" } = $$props;
@@ -36801,7 +36998,7 @@ function instance47($$self, $$props, $$invalidate) {
 var CopyToClipboardButton = class extends SvelteComponent {
   constructor(options) {
     super();
-    init(this, options, instance47, create_fragment47, safe_not_equal, {
+    init(this, options, instance48, create_fragment48, safe_not_equal, {
       cls: 0,
       text: 1,
       aria_label: 2,
@@ -37009,7 +37206,7 @@ function create_if_block15(ctx) {
     }
   };
 }
-function create_fragment48(ctx) {
+function create_fragment49(ctx) {
   let div;
   let codeblockerrors;
   let t0;
@@ -37017,10 +37214,18 @@ function create_fragment48(ctx) {
   let current_block_type_index;
   let if_block1;
   let current;
-  codeblockerrors = new CodeblockErrors_default({ props: { errors: (
-    /*errors*/
-    ctx[2]
-  ) } });
+  codeblockerrors = new CodeblockErrors_default({
+    props: {
+      plugin: (
+        /*plugin*/
+        ctx[0]
+      ),
+      errors: (
+        /*errors*/
+        ctx[2]
+      )
+    }
+  });
   let if_block0 = (
     /*options*/
     ctx[1].title && create_if_block_16(ctx)
@@ -37060,6 +37265,10 @@ function create_fragment48(ctx) {
     },
     p(ctx2, [dirty]) {
       const codeblockerrors_changes = {};
+      if (dirty & /*plugin*/
+      1)
+        codeblockerrors_changes.plugin = /*plugin*/
+        ctx2[0];
       if (dirty & /*errors*/
       4)
         codeblockerrors_changes.errors = /*errors*/
@@ -37124,7 +37333,7 @@ function create_fragment48(ctx) {
     }
   };
 }
-function instance48($$self, $$props, $$invalidate) {
+function instance49($$self, $$props, $$invalidate) {
   let source_path;
   let edges;
   let mermaid;
@@ -37234,7 +37443,7 @@ function instance48($$self, $$props, $$invalidate) {
 var CodeblockMermaid = class extends SvelteComponent {
   constructor(options) {
     super();
-    init(this, options, instance48, create_fragment48, safe_not_equal, {
+    init(this, options, instance49, create_fragment49, safe_not_equal, {
       plugin: 0,
       options: 1,
       errors: 2,
@@ -37249,7 +37458,7 @@ var CodeblockMermaid = class extends SvelteComponent {
 var CodeblockMermaid_default = CodeblockMermaid;
 
 // src/components/NestedEdgeList.svelte
-function get_each_context12(ctx, list, i) {
+function get_each_context11(ctx, list, i) {
   const child_ctx = ctx.slice();
   child_ctx[9] = list[i];
   child_ctx[10] = list;
@@ -37438,7 +37647,7 @@ function create_if_block16(ctx) {
     }
   };
 }
-function create_each_block12(ctx) {
+function create_each_block11(ctx) {
   var _a;
   let details;
   let summary;
@@ -37660,7 +37869,7 @@ function create_each_block12(ctx) {
     }
   };
 }
-function create_fragment49(ctx) {
+function create_fragment50(ctx) {
   let each_1_anchor;
   let current;
   let each_value = ensure_array_like(
@@ -37672,7 +37881,7 @@ function create_fragment49(ctx) {
   );
   let each_blocks = [];
   for (let i = 0; i < each_value.length; i += 1) {
-    each_blocks[i] = create_each_block12(get_each_context12(ctx, each_value, i));
+    each_blocks[i] = create_each_block11(get_each_context11(ctx, each_value, i));
   }
   const out = (i) => transition_out(each_blocks[i], 1, 1, () => {
     each_blocks[i] = null;
@@ -37705,12 +37914,12 @@ function create_fragment49(ctx) {
         );
         let i;
         for (i = 0; i < each_value.length; i += 1) {
-          const child_ctx = get_each_context12(ctx2, each_value, i);
+          const child_ctx = get_each_context11(ctx2, each_value, i);
           if (each_blocks[i]) {
             each_blocks[i].p(child_ctx, dirty);
             transition_in(each_blocks[i], 1);
           } else {
-            each_blocks[i] = create_each_block12(child_ctx);
+            each_blocks[i] = create_each_block11(child_ctx);
             each_blocks[i].c();
             transition_in(each_blocks[i], 1);
             each_blocks[i].m(each_1_anchor.parentNode, each_1_anchor);
@@ -37746,7 +37955,7 @@ function create_fragment49(ctx) {
     }
   };
 }
-function instance49($$self, $$props, $$invalidate) {
+function instance50($$self, $$props, $$invalidate) {
   let { plugin } = $$props;
   let { tree } = $$props;
   let { open_signal } = $$props;
@@ -37801,7 +38010,7 @@ function instance49($$self, $$props, $$invalidate) {
 var NestedEdgeList = class extends SvelteComponent {
   constructor(options) {
     super();
-    init(this, options, instance49, create_fragment49, safe_not_equal, {
+    init(this, options, instance50, create_fragment50, safe_not_equal, {
       plugin: 0,
       tree: 1,
       open_signal: 6,
@@ -37996,7 +38205,7 @@ function create_if_block17(ctx) {
     }
   };
 }
-function create_fragment50(ctx) {
+function create_fragment51(ctx) {
   let div;
   let codeblockerrors;
   let t0;
@@ -38004,10 +38213,18 @@ function create_fragment50(ctx) {
   let current_block_type_index;
   let if_block1;
   let current;
-  codeblockerrors = new CodeblockErrors_default({ props: { errors: (
-    /*errors*/
-    ctx[2]
-  ) } });
+  codeblockerrors = new CodeblockErrors_default({
+    props: {
+      plugin: (
+        /*plugin*/
+        ctx[0]
+      ),
+      errors: (
+        /*errors*/
+        ctx[2]
+      )
+    }
+  });
   let if_block0 = (
     /*options*/
     ctx[1].title && create_if_block_18(ctx)
@@ -38047,6 +38264,10 @@ function create_fragment50(ctx) {
     },
     p(ctx2, [dirty]) {
       const codeblockerrors_changes = {};
+      if (dirty & /*plugin*/
+      1)
+        codeblockerrors_changes.plugin = /*plugin*/
+        ctx2[0];
       if (dirty & /*errors*/
       4)
         codeblockerrors_changes.errors = /*errors*/
@@ -38111,7 +38332,7 @@ function create_fragment50(ctx) {
     }
   };
 }
-function instance50($$self, $$props, $$invalidate) {
+function instance51($$self, $$props, $$invalidate) {
   let source_path;
   let $active_file_store;
   component_subscribe($$self, active_file_store, ($$value) => $$invalidate(8, $active_file_store = $$value));
@@ -38175,7 +38396,7 @@ function instance50($$self, $$props, $$invalidate) {
 var CodeblockTree = class extends SvelteComponent {
   constructor(options) {
     super();
-    init(this, options, instance50, create_fragment50, safe_not_equal, {
+    init(this, options, instance51, create_fragment51, safe_not_equal, {
       plugin: 0,
       options: 1,
       errors: 2,
@@ -38223,7 +38444,7 @@ var CodeblockMDRC = class extends import_obsidian27.MarkdownRenderChild {
       log.warn("fatal codeblock errors", errors);
       new CodeblockErrors_default({
         target: this.containerEl,
-        props: { errors }
+        props: { errors, plugin: this.plugin }
       });
       return;
     }
@@ -39003,7 +39224,7 @@ function create_if_block18(ctx) {
     }
   };
 }
-function create_fragment51(ctx) {
+function create_fragment52(ctx) {
   let button;
   let current_block_type_index;
   let if_block;
@@ -39103,7 +39324,7 @@ function create_fragment51(ctx) {
     }
   };
 }
-function instance51($$self, $$props, $$invalidate) {
+function instance52($$self, $$props, $$invalidate) {
   let { cls = "" } = $$props;
   let { open } = $$props;
   const click_handler = () => $$invalidate(0, open = !open);
@@ -39118,7 +39339,7 @@ function instance51($$self, $$props, $$invalidate) {
 var ChevronCollapseButton = class extends SvelteComponent {
   constructor(options) {
     super();
-    init(this, options, instance51, create_fragment51, safe_not_equal, { cls: 1, open: 0 });
+    init(this, options, instance52, create_fragment52, safe_not_equal, { cls: 1, open: 0 });
   }
 };
 var ChevronCollapseButton_default = ChevronCollapseButton;
@@ -39290,7 +39511,7 @@ function create_key_block6(ctx) {
     }
   };
 }
-function create_fragment52(ctx) {
+function create_fragment53(ctx) {
   let div3;
   let div1;
   let div0;
@@ -39553,7 +39774,7 @@ function create_fragment52(ctx) {
     }
   };
 }
-function instance52($$self, $$props, $$invalidate) {
+function instance53($$self, $$props, $$invalidate) {
   let sort;
   let edge_field_labels;
   let tree;
@@ -39632,7 +39853,7 @@ function instance52($$self, $$props, $$invalidate) {
 var TreeView = class extends SvelteComponent {
   constructor(options) {
     super();
-    init(this, options, instance52, create_fragment52, safe_not_equal, { plugin: 0 });
+    init(this, options, instance53, create_fragment53, safe_not_equal, { plugin: 0 });
   }
 };
 var TreeView_default = TreeView;

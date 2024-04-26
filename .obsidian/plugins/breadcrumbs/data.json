@@ -160,7 +160,7 @@
   },
   "suggestors": {
     "edge_field": {
-      "enabled": false,
+      "enabled": true,
       "trigger": "."
     }
   },
@@ -170,61 +170,48 @@
   "is_dirty": false,
   "edge_fields": [
     {
-      "label": "up"
+      "label": "parent"
     },
     {
-      "label": "down"
+      "label": "sibling"
     },
     {
-      "label": "same"
+      "label": "child"
     },
     {
-      "label": "next"
+      "label": "spouse"
     },
     {
-      "label": "prev"
+      "label": "friend"
+    },
+    {
+      "label": "grandparent"
     }
   ],
   "edge_field_groups": [
     {
       "label": "ups",
-      "fields": [
-        "up"
-      ]
+      "fields": []
     },
     {
       "label": "downs",
-      "fields": [
-        "down"
-      ]
+      "fields": []
     },
     {
       "label": "sames",
-      "fields": [
-        "same"
-      ]
+      "fields": []
     },
     {
       "label": "nexts",
-      "fields": [
-        "next"
-      ]
+      "fields": []
     },
     {
       "label": "prevs",
-      "fields": [
-        "prev"
-      ]
+      "fields": []
     },
     {
       "label": "hierarchy 1",
-      "fields": [
-        "up",
-        "down",
-        "same",
-        "next",
-        "prev"
-      ]
+      "fields": []
     }
   ],
   "implied_relations": {

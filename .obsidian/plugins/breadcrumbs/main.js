@@ -9618,32 +9618,6 @@ var import_obsidian35 = require("obsidian");
 // src/codeblocks/index.ts
 var import_obsidian = require("obsidian");
 
-// src/const/graph.ts
-var EXPLICIT_EDGE_SOURCES = [
-  "typed_link",
-  "tag_note",
-  "list_note",
-  "dendron_note",
-  "johnny_decimal_note",
-  "dataview_note",
-  "date_note",
-  "folder_note",
-  "regex_note"
-  // TODO: "zetel_note", // Can date_notes do this already?
-];
-var SIMPLE_EDGE_SORT_FIELDS = [
-  // The order they were added to the graph
-  // Hidden because I don't think anyone really cares about that order
-  // "graph",
-  "basename",
-  "path",
-  "field",
-  // Whether the edge is explicit or not
-  // Uses source and implied_kind as tie-breakers for explicit == true and false, respectively
-  "explicit"
-];
-var COMPLEX_EDGE_SORT_FIELD_PREFIXES = ["neighbour-field"];
-
 // src/external/dataview/index.ts
 var import_obsidian_dataview = __toESM(require_lib());
 
@@ -9736,31 +9710,86 @@ var dataview_plugin = {
   await_if_enabled
 };
 
-// src/graph/MyMultiGraph.ts
-var import_graphology = __toESM(require_graphology_umd_min());
-
-// src/utils/result.ts
-var succ = (data) => ({
-  ok: true,
-  data
-});
-var fail = (error) => ({
-  ok: false,
-  error
-});
-var graph_build_fail = (error) => fail(error);
-
-// src/graph/objectify_mappers.ts
-var objectify_edge_mapper = (cb) => (edge_id, attr2, source_id, target_id, source_attr, target_attr, undirected) => cb({
-  id: edge_id,
-  attr: attr2,
-  source_id,
-  target_id,
-  source_attr,
-  target_attr,
-  undirected
-});
-var objectify_edge = objectify_edge_mapper((e) => e);
+// src/utils/arrays.ts
+var ensure_is_array = (maybe_array) => {
+  if (Array.isArray(maybe_array))
+    return maybe_array;
+  return [maybe_array];
+};
+var ensure_square_array = (arr, fill, pre) => {
+  const max_width = Math.max(...arr.map((row) => row.length));
+  return arr.map((row) => {
+    const diff = max_width - row.length;
+    if (pre) {
+      return Array(diff).fill(fill).concat(row);
+    } else {
+      return row.concat(Array(diff).fill(fill));
+    }
+  });
+};
+var transpose = (arr) => {
+  const transposed = [];
+  if (!arr.length)
+    return transposed;
+  for (let i = 0; i < arr.at(0).length; i++) {
+    transposed.push([]);
+    for (let j = 0; j < arr.length; j++) {
+      transposed[i].push(arr[j][i]);
+    }
+  }
+  return transposed;
+};
+var gather_by_runs = (arr, get_value) => {
+  const runs = [];
+  for (let i = 0; i < arr.length; i++) {
+    const last_run = runs.at(-1);
+    const value = get_value(arr[i]);
+    if (last_run && last_run.value === value) {
+      last_run.last = i;
+    } else {
+      runs.push({ value, first: i, last: i });
+    }
+  }
+  return runs;
+};
+var group_by = (list, get_value, project = (item) => item) => {
+  const grouped = {};
+  list.forEach((item) => {
+    const key = get_value(item);
+    if (key === void 0)
+      return;
+    const group = grouped[key];
+    const projected = project(item);
+    if (!group)
+      grouped[key] = [projected];
+    else
+      group.push(projected);
+  });
+  return grouped;
+};
+var group_projection = (grouped, projector) => {
+  const projected = {};
+  Object.entries(grouped).forEach(([key, items]) => {
+    projected[key] = projector(items);
+  });
+  return projected;
+};
+var remove_duplicates = (arr) => {
+  const set = new Set(arr);
+  return Array.from(set);
+};
+var remove_duplicates_by = (arr, get_value) => {
+  const set = /* @__PURE__ */ new Set();
+  const unique = [];
+  arr.forEach((item) => {
+    const value = get_value(item);
+    if (set.has(value))
+      return;
+    set.add(value);
+    unique.push(item);
+  });
+  return unique;
+};
 
 // src/utils/objects.ts
 function deep_merge_objects(obj1, obj2) {
@@ -9844,493 +9873,6 @@ var Paths = {
   build,
   normalise,
   show
-};
-
-// src/graph/utils.ts
-var is_self_loop = (edge) => edge.source_id === edge.target_id;
-var stringify_node = (node_id, node_attr, options) => {
-  var _a, _b;
-  if (((_a = options == null ? void 0 : options.show_node_options) == null ? void 0 : _a.alias) && ((_b = node_attr.aliases) == null ? void 0 : _b.length)) {
-    return node_attr.aliases.at(0);
-  } else if (options == null ? void 0 : options.trim_basename_delimiter) {
-    return Paths.drop_ext(node_id).split("/").pop().split(options.trim_basename_delimiter).last();
-  } else {
-    return Paths.show(node_id, options == null ? void 0 : options.show_node_options);
-  }
-};
-var sorters = {
-  path: (order) => (a, b) => a.target_id.localeCompare(b.target_id) * order,
-  basename: (order) => (a, b) => {
-    const [a_field, b_field] = [
-      Paths.drop_folder(a.target_id),
-      Paths.drop_folder(b.target_id)
-    ];
-    return a_field.localeCompare(b_field) * order;
-  },
-  field: (order) => (a, b) => {
-    var _a, _b;
-    const [a_field, b_field] = [
-      (_a = a.attr.field) != null ? _a : "null",
-      (_b = b.attr.field) != null ? _b : "null"
-    ];
-    return a_field.localeCompare(b_field) * order;
-  }
-};
-var get_edge_sorter = (sort, graph) => {
-  switch (sort.field) {
-    case "path": {
-      return sorters.path(sort.order);
-    }
-    case "basename": {
-      return sorters.basename(sort.order);
-    }
-    case "field": {
-      return sorters.field(sort.order);
-    }
-    case "explicit": {
-      return (a, b) => {
-        if (a.attr.explicit === true && b.attr.explicit === true) {
-          return a.attr.source.localeCompare(b.attr.source) * sort.order;
-        } else if (a.attr.explicit === false && b.attr.explicit === false) {
-          return a.attr.implied_kind.localeCompare(b.attr.implied_kind) * sort.order;
-        } else {
-          return a.attr.explicit ? sort.order : -sort.order;
-        }
-      };
-    }
-    default: {
-      if (!COMPLEX_EDGE_SORT_FIELD_PREFIXES.some(
-        (f) => sort.field.startsWith(f + ":")
-      )) {
-        throw new Error(`Invalid sort field: ${sort.field}`);
-      }
-      switch (sort.field.split(":")[0]) {
-        case "neighbour":
-        case "neighbour-field": {
-          const field = sort.field.split(":", 2).at(1);
-          const cache = {};
-          return (a, b) => {
-            var _a, _b, _c, _d;
-            const [a_neighbour, b_neighbour] = [
-              (_b = cache[_a = a.target_id]) != null ? _b : cache[_a] = graph.get_out_edges(a.target_id).filter((e) => has_edge_attrs(e, { field })).at(0),
-              (_d = cache[_c = b.target_id]) != null ? _d : cache[_c] = graph.get_out_edges(b.target_id).filter((e) => has_edge_attrs(e, { field })).at(0)
-            ];
-            if (!a_neighbour || !b_neighbour) {
-              return a_neighbour ? -sort.order : b_neighbour ? sort.order : 0;
-            } else {
-              return sorters.path(sort.order)(
-                a_neighbour,
-                b_neighbour
-              );
-            }
-          };
-        }
-        default: {
-          return (_a, _b) => sort.order;
-        }
-      }
-    }
-  }
-};
-var has_edge_attrs = (edge, attrs) => {
-  var _a;
-  return attrs === void 0 || [
-    attrs.field === void 0 || edge.attr.field === attrs.field,
-    attrs.explicit === void 0 || edge.attr.explicit === attrs.explicit,
-    attrs.$or_fields === void 0 || attrs.$or_fields.includes((_a = edge.attr.field) != null ? _a : "null"),
-    attrs.$or_target_ids === void 0 || attrs.$or_target_ids.includes(edge.target_id)
-  ].every(Boolean);
-};
-
-// src/graph/MyMultiGraph.ts
-var EDGE_ATTRIBUTES = [
-  "field",
-  "explicit",
-  "source",
-  "implied_kind",
-  "round"
-];
-var BCGraph = class extends import_graphology.MultiGraph {
-  constructor(input) {
-    var _a, _b;
-    super();
-    /** Uniquely identify an edge based on its:
-     * - source_id
-     * - target_id
-     * - field
-     */
-    this.make_edge_id = (source_id, target_id, attr2) => `${source_id}|${attr2.field}|${target_id}`;
-    // NOTE: These fields shouldn't actually dedupe an edge... I think what the user would consider an edge to be the same
-    //   even if it was added for different reasons, but still to and from the same nodes, using the same field.
-    //   Consider the commands/freeze-crumbs/index.md note as an example. If these fields were included, the implied relations would still show
-    //   even tho there are now frozen real relations serving the exact same purpose.
-    // |${attr.explicit ? "explicit|" + attr.source : "implied|" + attr.implied_kind}
-    /** Return true if the edge was added.
-     * Won't be added if it already exists (based on it's {@link this.make_edge_id}),
-     * 	or if it's target_node has ingore_in_edges */
-    this.safe_add_directed_edge = (source_id, target_id, attr2) => {
-      if (this.getNodeAttribute(target_id, "ignore_in_edges")) {
-        log.debug(
-          `ignore-in-edge > ${source_id} -${attr2.field}-> ${target_id}`
-        );
-        return false;
-      } else if (this.getNodeAttribute(source_id, "ignore_out_edges")) {
-        log.debug(
-          `ignore-out-edge > ${source_id} -${attr2.field}-> ${target_id}`
-        );
-        return false;
-      }
-      const edge_id = this.make_edge_id(source_id, target_id, attr2);
-      if (!this.hasDirectedEdge(edge_id)) {
-        this.addDirectedEdgeWithKey(edge_id, source_id, target_id, attr2);
-        return true;
-      } else {
-        return false;
-      }
-    };
-    /** safely returns [] if node_id and !hasNode(node_id) */
-    this.get_in_edges = (node_id) => node_id ? this.hasNode(node_id) ? this.mapInEdges(node_id, objectify_edge) : [] : this.mapInEdges(objectify_edge);
-    /** safely returns [] if node_id and !hasNode(node_id) */
-    this.get_out_edges = (node_id) => node_id ? this.hasNode(node_id) ? this.mapOutEdges(node_id, objectify_edge) : [] : this.mapOutEdges(objectify_edge);
-    if (input) {
-      (_a = input.nodes) == null ? void 0 : _a.forEach(
-        ({ id, attr: attr2 }) => this.safe_add_node(id, attr2)
-      );
-      (_b = input.edges) == null ? void 0 : _b.forEach((edge) => {
-        this.safe_add_node(edge.source_id, { resolved: true });
-        this.safe_add_node(edge.target_id, { resolved: true });
-        this.safe_add_directed_edge(
-          edge.source_id,
-          edge.target_id,
-          edge.attr
-        );
-      });
-    }
-  }
-  safe_add_node(id, attr2) {
-    try {
-      this.addNode(id, attr2);
-      return true;
-    } catch (error) {
-      return false;
-    }
-  }
-  /** Upsert a node by it's id (path). If it exists, patch attr, else addNode */
-  upsert_node(id, attr2) {
-    if (this.hasNode(id)) {
-      Object.keys(attr2).forEach((key) => {
-        this.setNodeAttribute(
-          id,
-          key,
-          attr2[key]
-        );
-      });
-    } else {
-      this.addNode(id, attr2);
-    }
-  }
-  safe_rename_node(old_id, new_id) {
-    const exists = {
-      old: this.hasNode(old_id),
-      new: this.hasNode(new_id)
-    };
-    if (!exists.old) {
-      return fail({ exists, message: "old_id doesn't exist" });
-    } else if (exists.new) {
-      return fail({ exists, message: "new_id already exists" });
-    } else {
-      this.addNode(new_id, this.getNodeAttributes(old_id));
-      const old_edges = {
-        in: this.get_in_edges(old_id),
-        out: this.get_out_edges(old_id)
-      };
-      this.dropNode(old_id);
-      old_edges.in.forEach((old_in_edge) => {
-        is_self_loop(old_in_edge) ? this.safe_add_directed_edge(
-          new_id,
-          new_id,
-          old_in_edge.attr
-        ) : this.safe_add_directed_edge(
-          old_in_edge.source_id,
-          new_id,
-          old_in_edge.attr
-        );
-      });
-      old_edges.out.forEach((old_out_edge) => {
-        !is_self_loop(old_out_edge) && this.safe_add_directed_edge(
-          new_id,
-          old_out_edge.target_id,
-          old_out_edge.attr
-        );
-      });
-    }
-    return succ({ exists });
-  }
-};
-
-// src/utils/arrays.ts
-var ensure_is_array = (maybe_array) => {
-  if (Array.isArray(maybe_array))
-    return maybe_array;
-  return [maybe_array];
-};
-var ensure_square_array = (arr, fill, pre) => {
-  const max_width = Math.max(...arr.map((row) => row.length));
-  return arr.map((row) => {
-    const diff = max_width - row.length;
-    if (pre) {
-      return Array(diff).fill(fill).concat(row);
-    } else {
-      return row.concat(Array(diff).fill(fill));
-    }
-  });
-};
-var transpose = (arr) => {
-  const transposed = [];
-  if (!arr.length)
-    return transposed;
-  for (let i = 0; i < arr.at(0).length; i++) {
-    transposed.push([]);
-    for (let j = 0; j < arr.length; j++) {
-      transposed[i].push(arr[j][i]);
-    }
-  }
-  return transposed;
-};
-var gather_by_runs = (arr, get_value) => {
-  const runs = [];
-  for (let i = 0; i < arr.length; i++) {
-    const last_run = runs.at(-1);
-    const value = get_value(arr[i]);
-    if (last_run && last_run.value === value) {
-      last_run.last = i;
-    } else {
-      runs.push({ value, first: i, last: i });
-    }
-  }
-  return runs;
-};
-var group_by = (list, get_value, project = (item) => item) => {
-  const grouped = {};
-  list.forEach((item) => {
-    const key = get_value(item);
-    if (key === void 0)
-      return;
-    const group = grouped[key];
-    const projected = project(item);
-    if (!group)
-      grouped[key] = [projected];
-    else
-      group.push(projected);
-  });
-  return grouped;
-};
-var group_projection = (grouped, projector) => {
-  const projected = {};
-  Object.entries(grouped).forEach(([key, items]) => {
-    projected[key] = projector(items);
-  });
-  return projected;
-};
-var remove_duplicates = (arr) => {
-  const set = new Set(arr);
-  return Array.from(set);
-};
-var remove_duplicates_by = (arr, get_value) => {
-  const set = /* @__PURE__ */ new Set();
-  const unique = [];
-  arr.forEach((item) => {
-    const value = get_value(item);
-    if (set.has(value))
-      return;
-    set.add(value);
-    unique.push(item);
-  });
-  return unique;
-};
-
-// src/utils/edge_fields.ts
-var resolve_field_group_labels = (edge_field_groups, field_group_labels) => remove_duplicates(
-  edge_field_groups.filter((group) => field_group_labels.includes(group.label)).flatMap((group) => group.fields)
-);
-
-// src/utils/url.ts
-var url_search_params = (obj, options) => {
-  const { delimiter } = Object.assign({ delimiter: " " }, options);
-  let params = "";
-  for (const key in obj) {
-    params += `${key}=${obj[key]}${delimiter}`;
-  }
-  params = params.slice(0, -1);
-  if ((options == null ? void 0 : options.trim_lone_param) && Object.keys(obj).length === 1) {
-    params = params.split("=", 2)[1];
-  }
-  return params;
-};
-
-// src/utils/mermaid.ts
-var MERMAID_DIRECTIONS = ["LR", "RL", "TB", "BT"];
-var MERMAID_RENDERER = ["dagre", "elk"];
-var build_arrow = (e) => e.attr.explicit ? "-->" : "-.->";
-var build_attrs = (attr2, show_attributes) => {
-  const params = (show_attributes == null ? void 0 : show_attributes.length) ? url_search_params(untyped_pick(attr2, show_attributes), {
-    trim_lone_param: true
-  }) : null;
-  return (params == null ? void 0 : params.length) ? `|"${params}"|` : "";
-};
-var from_edges = (edges, config) => {
-  var _a, _b, _c, _d, _e;
-  const { direction, kind, renderer, get_node_label } = Object.assign(
-    { direction: "LR", kind: "flowchart", renderer: "dagre" },
-    remove_nullish_keys(config != null ? config : {})
-  );
-  const lines = [
-    // NOTE: Regardless of kind, the below field should always be flowchart
-    `%%{init: {"flowchart": {"defaultRenderer": "${renderer}"}} }%%`,
-    `${kind} ${direction}`
-  ];
-  const node_map = remove_duplicates_by(
-    // NOTE: This is _pretty_ inefficient, but necessary.
-    // If we just take all unique target_ids, we miss source nodes that don't have any incoming edges.
-    edges.flatMap((e) => [
-      { path: e.source_id, attr: e.source_attr },
-      { path: e.target_id, attr: e.target_attr }
-    ]),
-    (n2) => n2.path
-  ).reduce(
-    (map, node, i) => {
-      var _a2;
-      return map.set(node.path, {
-        i,
-        attr: node.attr,
-        label: (_a2 = get_node_label == null ? void 0 : get_node_label(node.path, node.attr)) != null ? _a2 : node.path
-      });
-    },
-    /* @__PURE__ */ new Map()
-  );
-  node_map.forEach((node) => {
-    lines.push(`	${node.i}("${node.label}")`);
-  });
-  lines.push("");
-  const mermaid_edges = [];
-  for (const edge of edges) {
-    const [source_i, target_i] = [
-      node_map.get(edge.source_id).i,
-      node_map.get(edge.target_id).i
-    ];
-    const opposing_edge_i = (config == null ? void 0 : config.collapse_opposing_edges) !== false ? mermaid_edges.findIndex(
-      (existing) => (
-        // NOTE: This is pretty intense, all opposing edges will collapse, because now there's no direction semantics
-        target_i === existing.source_i && source_i === existing.target_i
-      )
-    ) : -1;
-    if (opposing_edge_i === -1) {
-      mermaid_edges.push({
-        source_i,
-        target_i,
-        arrow: build_arrow(edge),
-        attr: edge.attr,
-        collapsed_attr: Object.fromEntries(
-          (_b = (_a = config == null ? void 0 : config.show_attributes) == null ? void 0 : _a.map((attr2) => {
-            var _a2;
-            return [
-              attr2,
-              /* @__PURE__ */ new Set([
-                // @ts-ignore: If the property is not in the object, it will be undefined
-                (_a2 = edge.attr[attr2]) != null ? _a2 : "_"
-              ])
-            ];
-          })) != null ? _b : []
-        )
-      });
-    } else {
-      const existing = mermaid_edges[opposing_edge_i];
-      existing.arrow = edge.attr.explicit || existing.attr.explicit ? "<-->" : "<-.->";
-      (_c = config == null ? void 0 : config.show_attributes) == null ? void 0 : _c.forEach((attr2) => {
-        var _a2;
-        existing.collapsed_attr[attr2].add(
-          // @ts-ignore: If the property is not in the object, it will be undefined
-          (_a2 = edge.attr[attr2]) != null ? _a2 : "_"
-        );
-      });
-    }
-  }
-  mermaid_edges.forEach(({ arrow, collapsed_attr, source_i, target_i }) => {
-    const attrs = build_attrs(
-      Object.fromEntries(
-        Object.entries(collapsed_attr).map(([key, set]) => [
-          key,
-          [...set.values()].join("|")
-        ])
-      ),
-      config == null ? void 0 : config.show_attributes
-    );
-    lines.push(`	${source_i} ${arrow}${attrs} ${target_i}`);
-  });
-  lines.push("");
-  const active_note_i = (config == null ? void 0 : config.active_node_id) ? (_d = node_map.get(config == null ? void 0 : config.active_node_id)) == null ? void 0 : _d.i : void 0;
-  if (active_note_i !== void 0) {
-    lines.push(`	class ${active_note_i} BC-active-node`);
-  }
-  switch ((_e = config == null ? void 0 : config.click) == null ? void 0 : _e.method) {
-    case "class": {
-      const nodes = [...node_map.values()];
-      if (nodes.length) {
-        lines.push(
-          `	class ${nodes.filter((n2) => n2.i !== active_note_i).map((n2) => n2.i)} internal-link`
-        );
-      }
-      const unresolved_nodes = nodes.filter((n2) => !n2.attr.resolved);
-      if (unresolved_nodes.length) {
-        lines.push(
-          `	class ${unresolved_nodes.map((n2) => n2.i)} is-unresolved`
-        );
-      }
-      break;
-    }
-    case "href": {
-      node_map.forEach((node, path) => {
-        var _a2;
-        lines.push(
-          `	click ${node.i} "${(_a2 = config.click) == null ? void 0 : _a2.getter(path, node.attr)}"`
-        );
-      });
-      break;
-    }
-    case "callback": {
-      node_map.forEach((node) => {
-        var _a2;
-        lines.push(
-          `	click ${node.i} call ${(_a2 = config.click) == null ? void 0 : _a2.callback_name}()`
-        );
-      });
-      break;
-    }
-  }
-  return lines.join("\n");
-};
-var _encode = (code) => {
-  const bytes = new TextEncoder().encode(code);
-  return btoa(String.fromCharCode(...bytes));
-};
-var to_image_link = (code) => `https://mermaid.ink/img/${_encode(code)}`;
-var to_live_edit_link = (code) => {
-  const state = {
-    code,
-    // NOTE: For some reason, having both true doesn't trigger the initial render?
-    autoSync: false,
-    updateDiagram: true,
-    mermaid: { theme: "default" }
-  };
-  const encoded = _encode(JSON.stringify(state, void 0, 2));
-  return `https://mermaid.live/edit#base64:${encoded}`;
-};
-var Mermaid = {
-  from_edges,
-  to_image_link,
-  to_live_edit_link,
-  RENDERERS: MERMAID_RENDERER,
-  DIRECTIONS: MERMAID_DIRECTIONS
 };
 
 // node_modules/zod/lib/index.mjs
@@ -14250,7 +13792,465 @@ var z = /* @__PURE__ */ Object.freeze({
   ZodError
 });
 
-// src/codeblocks/index.ts
+// src/const/graph.ts
+var EXPLICIT_EDGE_SOURCES = [
+  "typed_link",
+  "tag_note",
+  "list_note",
+  "dendron_note",
+  "johnny_decimal_note",
+  "dataview_note",
+  "date_note",
+  "folder_note",
+  "regex_note"
+  // TODO: "zetel_note", // Can date_notes do this already?
+];
+var SIMPLE_EDGE_SORT_FIELDS = [
+  // The order they were added to the graph
+  // Hidden because I don't think anyone really cares about that order
+  // "graph",
+  "basename",
+  "path",
+  "field",
+  // Whether the edge is explicit or not
+  // Uses source and implied_kind as tie-breakers for explicit == true and false, respectively
+  "explicit"
+];
+var COMPLEX_EDGE_SORT_FIELD_PREFIXES = ["neighbour-field"];
+
+// src/graph/MyMultiGraph.ts
+var import_graphology = __toESM(require_graphology_umd_min());
+
+// src/utils/result.ts
+var succ = (data) => ({
+  ok: true,
+  data
+});
+var fail = (error) => ({
+  ok: false,
+  error
+});
+var graph_build_fail = (error) => fail(error);
+
+// src/graph/objectify_mappers.ts
+var objectify_edge_mapper = (cb) => (edge_id, attr2, source_id, target_id, source_attr, target_attr, undirected) => cb({
+  id: edge_id,
+  attr: attr2,
+  source_id,
+  target_id,
+  source_attr,
+  target_attr,
+  undirected
+});
+var objectify_edge = objectify_edge_mapper((e) => e);
+
+// src/graph/utils.ts
+var is_self_loop = (edge) => edge.source_id === edge.target_id;
+var stringify_node = (node_id, node_attr, options) => {
+  var _a, _b;
+  if (((_a = options == null ? void 0 : options.show_node_options) == null ? void 0 : _a.alias) && ((_b = node_attr.aliases) == null ? void 0 : _b.length)) {
+    return node_attr.aliases.at(0);
+  } else if (options == null ? void 0 : options.trim_basename_delimiter) {
+    return Paths.drop_ext(node_id).split("/").pop().split(options.trim_basename_delimiter).last();
+  } else {
+    return Paths.show(node_id, options == null ? void 0 : options.show_node_options);
+  }
+};
+var sorters = {
+  path: (order) => (a, b) => a.target_id.localeCompare(b.target_id) * order,
+  basename: (order) => (a, b) => {
+    const [a_field, b_field] = [
+      Paths.drop_folder(a.target_id),
+      Paths.drop_folder(b.target_id)
+    ];
+    return a_field.localeCompare(b_field) * order;
+  },
+  field: (order) => (a, b) => {
+    var _a, _b;
+    const [a_field, b_field] = [
+      (_a = a.attr.field) != null ? _a : "null",
+      (_b = b.attr.field) != null ? _b : "null"
+    ];
+    return a_field.localeCompare(b_field) * order;
+  }
+};
+var get_edge_sorter = (sort, graph) => {
+  switch (sort.field) {
+    case "path": {
+      return sorters.path(sort.order);
+    }
+    case "basename": {
+      return sorters.basename(sort.order);
+    }
+    case "field": {
+      return sorters.field(sort.order);
+    }
+    case "explicit": {
+      return (a, b) => {
+        if (a.attr.explicit === true && b.attr.explicit === true) {
+          return a.attr.source.localeCompare(b.attr.source) * sort.order;
+        } else if (a.attr.explicit === false && b.attr.explicit === false) {
+          return a.attr.implied_kind.localeCompare(b.attr.implied_kind) * sort.order;
+        } else {
+          return a.attr.explicit ? sort.order : -sort.order;
+        }
+      };
+    }
+    default: {
+      if (!COMPLEX_EDGE_SORT_FIELD_PREFIXES.some(
+        (f) => sort.field.startsWith(f + ":")
+      )) {
+        throw new Error(`Invalid sort field: ${sort.field}`);
+      }
+      switch (sort.field.split(":")[0]) {
+        case "neighbour":
+        case "neighbour-field": {
+          const field = sort.field.split(":", 2).at(1);
+          const cache = {};
+          return (a, b) => {
+            var _a, _b, _c, _d;
+            const [a_neighbour, b_neighbour] = [
+              (_b = cache[_a = a.target_id]) != null ? _b : cache[_a] = graph.get_out_edges(a.target_id).filter((e) => has_edge_attrs(e, { field })).at(0),
+              (_d = cache[_c = b.target_id]) != null ? _d : cache[_c] = graph.get_out_edges(b.target_id).filter((e) => has_edge_attrs(e, { field })).at(0)
+            ];
+            if (!a_neighbour || !b_neighbour) {
+              return a_neighbour ? -sort.order : b_neighbour ? sort.order : 0;
+            } else {
+              return sorters.path(sort.order)(
+                a_neighbour,
+                b_neighbour
+              );
+            }
+          };
+        }
+        default: {
+          return (_a, _b) => sort.order;
+        }
+      }
+    }
+  }
+};
+var has_edge_attrs = (edge, attrs) => {
+  var _a;
+  return attrs === void 0 || [
+    attrs.field === void 0 || edge.attr.field === attrs.field,
+    attrs.explicit === void 0 || edge.attr.explicit === attrs.explicit,
+    attrs.$or_fields === void 0 || attrs.$or_fields.includes((_a = edge.attr.field) != null ? _a : "null"),
+    attrs.$or_target_ids === void 0 || attrs.$or_target_ids.includes(edge.target_id)
+  ].every(Boolean);
+};
+
+// src/graph/MyMultiGraph.ts
+var EDGE_ATTRIBUTES = [
+  "field",
+  "explicit",
+  "source",
+  "implied_kind",
+  "round"
+];
+var BCGraph = class extends import_graphology.MultiGraph {
+  constructor(input) {
+    var _a, _b;
+    super();
+    /** Uniquely identify an edge based on its:
+     * - source_id
+     * - target_id
+     * - field
+     */
+    this.make_edge_id = (source_id, target_id, attr2) => `${source_id}|${attr2.field}|${target_id}`;
+    // NOTE: These fields shouldn't actually dedupe an edge... I think what the user would consider an edge to be the same
+    //   even if it was added for different reasons, but still to and from the same nodes, using the same field.
+    //   Consider the commands/freeze-crumbs/index.md note as an example. If these fields were included, the implied relations would still show
+    //   even tho there are now frozen real relations serving the exact same purpose.
+    // |${attr.explicit ? "explicit|" + attr.source : "implied|" + attr.implied_kind}
+    /** Return true if the edge was added.
+     * Won't be added if it already exists (based on it's {@link this.make_edge_id}),
+     * 	or if it's target_node has ingore_in_edges */
+    this.safe_add_directed_edge = (source_id, target_id, attr2) => {
+      if (this.getNodeAttribute(target_id, "ignore_in_edges")) {
+        log.debug(
+          `ignore-in-edge > ${source_id} -${attr2.field}-> ${target_id}`
+        );
+        return false;
+      } else if (this.getNodeAttribute(source_id, "ignore_out_edges")) {
+        log.debug(
+          `ignore-out-edge > ${source_id} -${attr2.field}-> ${target_id}`
+        );
+        return false;
+      }
+      const edge_id = this.make_edge_id(source_id, target_id, attr2);
+      if (!this.hasDirectedEdge(edge_id)) {
+        this.addDirectedEdgeWithKey(edge_id, source_id, target_id, attr2);
+        return true;
+      } else {
+        return false;
+      }
+    };
+    /** safely returns [] if node_id and !hasNode(node_id) */
+    this.get_in_edges = (node_id) => node_id ? this.hasNode(node_id) ? this.mapInEdges(node_id, objectify_edge) : [] : this.mapInEdges(objectify_edge);
+    /** safely returns [] if node_id and !hasNode(node_id) */
+    this.get_out_edges = (node_id) => node_id ? this.hasNode(node_id) ? this.mapOutEdges(node_id, objectify_edge) : [] : this.mapOutEdges(objectify_edge);
+    if (input) {
+      (_a = input.nodes) == null ? void 0 : _a.forEach(
+        ({ id, attr: attr2 }) => this.safe_add_node(id, attr2)
+      );
+      (_b = input.edges) == null ? void 0 : _b.forEach((edge) => {
+        this.safe_add_node(edge.source_id, { resolved: true });
+        this.safe_add_node(edge.target_id, { resolved: true });
+        this.safe_add_directed_edge(
+          edge.source_id,
+          edge.target_id,
+          edge.attr
+        );
+      });
+    }
+  }
+  safe_add_node(id, attr2) {
+    try {
+      this.addNode(id, attr2);
+      return true;
+    } catch (error) {
+      return false;
+    }
+  }
+  /** Upsert a node by it's id (path). If it exists, patch attr, else addNode */
+  upsert_node(id, attr2) {
+    if (this.hasNode(id)) {
+      Object.keys(attr2).forEach((key) => {
+        this.setNodeAttribute(
+          id,
+          key,
+          attr2[key]
+        );
+      });
+    } else {
+      this.addNode(id, attr2);
+    }
+  }
+  safe_rename_node(old_id, new_id) {
+    const exists = {
+      old: this.hasNode(old_id),
+      new: this.hasNode(new_id)
+    };
+    if (!exists.old) {
+      return fail({ exists, message: "old_id doesn't exist" });
+    } else if (exists.new) {
+      return fail({ exists, message: "new_id already exists" });
+    } else {
+      this.addNode(new_id, this.getNodeAttributes(old_id));
+      const old_edges = {
+        in: this.get_in_edges(old_id),
+        out: this.get_out_edges(old_id)
+      };
+      this.dropNode(old_id);
+      old_edges.in.forEach((old_in_edge) => {
+        is_self_loop(old_in_edge) ? this.safe_add_directed_edge(
+          new_id,
+          new_id,
+          old_in_edge.attr
+        ) : this.safe_add_directed_edge(
+          old_in_edge.source_id,
+          new_id,
+          old_in_edge.attr
+        );
+      });
+      old_edges.out.forEach((old_out_edge) => {
+        !is_self_loop(old_out_edge) && this.safe_add_directed_edge(
+          new_id,
+          old_out_edge.target_id,
+          old_out_edge.attr
+        );
+      });
+    }
+    return succ({ exists });
+  }
+};
+
+// src/utils/edge_fields.ts
+var resolve_field_group_labels = (edge_field_groups, field_group_labels) => remove_duplicates(
+  edge_field_groups.filter((group) => field_group_labels.includes(group.label)).flatMap((group) => group.fields)
+);
+
+// src/utils/url.ts
+var url_search_params = (obj, options) => {
+  const { delimiter } = Object.assign({ delimiter: " " }, options);
+  let params = "";
+  for (const key in obj) {
+    params += `${key}=${obj[key]}${delimiter}`;
+  }
+  params = params.slice(0, -1);
+  if ((options == null ? void 0 : options.trim_lone_param) && Object.keys(obj).length === 1) {
+    params = params.split("=", 2)[1];
+  }
+  return params;
+};
+
+// src/utils/mermaid.ts
+var MERMAID_DIRECTIONS = ["LR", "RL", "TB", "BT"];
+var MERMAID_RENDERER = ["dagre", "elk"];
+var build_arrow = (e) => e.attr.explicit ? "-->" : "-.->";
+var build_attrs = (attr2, show_attributes) => {
+  const params = (show_attributes == null ? void 0 : show_attributes.length) ? url_search_params(untyped_pick(attr2, show_attributes), {
+    trim_lone_param: true
+  }) : null;
+  return (params == null ? void 0 : params.length) ? `|"${params}"|` : "";
+};
+var from_edges = (edges, config) => {
+  var _a, _b, _c, _d, _e;
+  const { direction, kind, renderer, get_node_label } = Object.assign(
+    { direction: "LR", kind: "flowchart", renderer: "dagre" },
+    remove_nullish_keys(config != null ? config : {})
+  );
+  const lines = [
+    // NOTE: Regardless of kind, the below field should always be flowchart
+    `%%{init: {"flowchart": {"defaultRenderer": "${renderer}"}} }%%`,
+    `${kind} ${direction}`
+  ];
+  const node_map = remove_duplicates_by(
+    // NOTE: This is _pretty_ inefficient, but necessary.
+    // If we just take all unique target_ids, we miss source nodes that don't have any incoming edges.
+    edges.flatMap((e) => [
+      { path: e.source_id, attr: e.source_attr },
+      { path: e.target_id, attr: e.target_attr }
+    ]),
+    (n2) => n2.path
+  ).reduce(
+    (map, node, i) => {
+      var _a2;
+      return map.set(node.path, {
+        i,
+        attr: node.attr,
+        label: (_a2 = get_node_label == null ? void 0 : get_node_label(node.path, node.attr)) != null ? _a2 : node.path
+      });
+    },
+    /* @__PURE__ */ new Map()
+  );
+  node_map.forEach((node) => {
+    lines.push(`	${node.i}("${node.label}")`);
+  });
+  lines.push("");
+  const mermaid_edges = [];
+  for (const edge of edges) {
+    const [source_i, target_i] = [
+      node_map.get(edge.source_id).i,
+      node_map.get(edge.target_id).i
+    ];
+    const opposing_edge_i = (config == null ? void 0 : config.collapse_opposing_edges) !== false ? mermaid_edges.findIndex(
+      (existing) => (
+        // NOTE: This is pretty intense, all opposing edges will collapse, because now there's no direction semantics
+        target_i === existing.source_i && source_i === existing.target_i
+      )
+    ) : -1;
+    if (opposing_edge_i === -1) {
+      mermaid_edges.push({
+        source_i,
+        target_i,
+        arrow: build_arrow(edge),
+        attr: edge.attr,
+        collapsed_attr: Object.fromEntries(
+          (_b = (_a = config == null ? void 0 : config.show_attributes) == null ? void 0 : _a.map((attr2) => {
+            var _a2;
+            return [
+              attr2,
+              /* @__PURE__ */ new Set([
+                // @ts-ignore: If the property is not in the object, it will be undefined
+                (_a2 = edge.attr[attr2]) != null ? _a2 : "_"
+              ])
+            ];
+          })) != null ? _b : []
+        )
+      });
+    } else {
+      const existing = mermaid_edges[opposing_edge_i];
+      existing.arrow = edge.attr.explicit || existing.attr.explicit ? "<-->" : "<-.->";
+      (_c = config == null ? void 0 : config.show_attributes) == null ? void 0 : _c.forEach((attr2) => {
+        var _a2;
+        existing.collapsed_attr[attr2].add(
+          // @ts-ignore: If the property is not in the object, it will be undefined
+          (_a2 = edge.attr[attr2]) != null ? _a2 : "_"
+        );
+      });
+    }
+  }
+  mermaid_edges.forEach(({ arrow, collapsed_attr, source_i, target_i }) => {
+    const attrs = build_attrs(
+      Object.fromEntries(
+        Object.entries(collapsed_attr).map(([key, set]) => [
+          key,
+          [...set.values()].join("|")
+        ])
+      ),
+      config == null ? void 0 : config.show_attributes
+    );
+    lines.push(`	${source_i} ${arrow}${attrs} ${target_i}`);
+  });
+  lines.push("");
+  const active_note_i = (config == null ? void 0 : config.active_node_id) ? (_d = node_map.get(config == null ? void 0 : config.active_node_id)) == null ? void 0 : _d.i : void 0;
+  if (active_note_i !== void 0) {
+    lines.push(`	class ${active_note_i} BC-active-node`);
+  }
+  switch ((_e = config == null ? void 0 : config.click) == null ? void 0 : _e.method) {
+    case "class": {
+      const nodes = [...node_map.values()];
+      if (nodes.length) {
+        lines.push(
+          `	class ${nodes.filter((n2) => n2.i !== active_note_i).map((n2) => n2.i)} internal-link`
+        );
+      }
+      const unresolved_nodes = nodes.filter((n2) => !n2.attr.resolved);
+      if (unresolved_nodes.length) {
+        lines.push(
+          `	class ${unresolved_nodes.map((n2) => n2.i)} is-unresolved`
+        );
+      }
+      break;
+    }
+    case "href": {
+      node_map.forEach((node, path) => {
+        var _a2;
+        lines.push(
+          `	click ${node.i} "${(_a2 = config.click) == null ? void 0 : _a2.getter(path, node.attr)}"`
+        );
+      });
+      break;
+    }
+    case "callback": {
+      node_map.forEach((node) => {
+        var _a2;
+        lines.push(
+          `	click ${node.i} call ${(_a2 = config.click) == null ? void 0 : _a2.callback_name}()`
+        );
+      });
+      break;
+    }
+  }
+  return lines.join("\n");
+};
+var _encode = (code) => {
+  const bytes = new TextEncoder().encode(code);
+  return btoa(String.fromCharCode(...bytes));
+};
+var to_image_link = (code) => `https://mermaid.ink/img/${_encode(code)}`;
+var to_live_edit_link = (code) => {
+  const state = {
+    code,
+    // NOTE: For some reason, having both true doesn't trigger the initial render?
+    autoSync: false,
+    updateDiagram: true,
+    mermaid: { theme: "default" }
+  };
+  const encoded = _encode(JSON.stringify(state, void 0, 2));
+  return `https://mermaid.live/edit#base64:${encoded}`;
+};
+var Mermaid = {
+  from_edges,
+  to_image_link,
+  to_live_edit_link,
+  RENDERERS: MERMAID_RENDERER,
+  DIRECTIONS: MERMAID_DIRECTIONS
+};
+
+// src/codeblocks/schema.ts
 var FIELDS = [
   "type",
   "title",
@@ -14269,20 +14269,26 @@ var FIELDS = [
   "mermaid-direction",
   "mermaid-renderer"
 ];
-var zod_not_string_msg = (field, received) => `Expected a string, but received: \`${received}\`. Try wrapping the value in quotes.
-**Valid Example**: \`${field}: "${received}"\``;
-var zod_invalid_enum_msg = (field, options, received) => `Expected one of the following options: ${quote_join(options, "`", ", or ")}, but received: \`${received}\`.
-**Valid Example**: \`${field}: ${options[0]}\``;
-var zod_not_array_msg = (field, options, received) => `This field is now expected to be a YAML list, but received: \`${received}\`. Try wrapping it in square brackets.
-**Valid Example**: \`${field}: [${options.slice(0, 2).join(", ")}]\`, or possibly: \`${field}: [${received}]\``;
-var dynamic_enum_schema = (options) => z.string().superRefine((f, ctx) => {
-  if (options.includes(f)) {
+var zod_not_string_msg = (field, received) => `Expected a string (text), but got: \`${received}\` (${typeof received}). _Try wrapping the value in quotes._
+**Example**: \`${field}: "${received}"\``;
+var zod_invalid_enum_msg = (field, options, received) => `Expected one of the following options: ${quote_join(options, "`", ", or ")}, but got: \`${received}\`.
+**Example**: \`${field}: ${options[0]}\``;
+var zod_not_array_msg = (field, options, received) => `This field is now expected to be a YAML list (array), but got: \`${received}\` (${typeof received}). _Try wrapping it in square brackets._
+**Example**: \`${field}: [${options.slice(0, 2).join(", ")}]\`, or possibly: \`${field}: [${received}]\``;
+var dynamic_enum_schema = (options, path) => z.string().superRefine((received, ctx) => {
+  if (options.includes(received)) {
     return true;
   } else {
     ctx.addIssue({
       options,
-      received: f,
-      code: "invalid_enum_value"
+      received,
+      code: "invalid_enum_value",
+      // NOTE: Leave the default path on _this_ object, but pass the override into the error message
+      message: zod_invalid_enum_msg(
+        path != null ? path : ctx.path.join("."),
+        options,
+        received
+      )
     });
     return false;
   }
@@ -14291,8 +14297,8 @@ var BOOLEANS = [true, false];
 var dynamic_enum_array_schema = (field, options, received) => z.array(dynamic_enum_schema(options), {
   invalid_type_error: zod_not_array_msg(field, options, received)
 });
-var codeblock_schema = (input, data) => {
-  var _a, _b, _c;
+var build2 = (input, data) => {
+  var _a, _b, _c, _d, _e, _f, _g, _h;
   const field_labels = data.edge_fields.map((f) => f.label);
   const group_labels = data.field_groups.map((f) => f.label);
   return z.object({
@@ -14381,24 +14387,38 @@ var codeblock_schema = (input, data) => {
       group_labels,
       input["field-groups"]
     ).optional(),
-    depth: z.array(z.number().min(0), {
-      invalid_type_error: `Expected a YAML list of one or two numbers, but received: \`${input["depth"]}\`. Try wrapping it in square brackets.
-**Valid Example**: \`depth: [0]\`, or \`depth: [0, 3]\`, or possibly: \`depth: [${input["depth"]}]\``
-    }).min(
+    depth: z.array(
+      z.number({
+        invalid_type_error: `Expected a number, but got: \`${input["depth"]}\` (${typeof input["depth"]}). _Try using a number (integer)._
+**Example**: \`depth: [0]\`, or \`depth: [0, 3]\``
+      }).min(
+        0,
+        `Minimum depth cannot be less than \`0\`, but got: \`${input["depth"]}\` _Try using a non-negative number (greater than or equal to zero \`0\`)._
+**Example**: \`depth: [0]\`, or possibly: \`depth: [${typeof input["depth"] === "number" ? -1 * input["depth"] : input["depth"]}\`]`
+      ),
+      {
+        invalid_type_error: `Expected a YAML list (array) of one or two numbers, but got: \`${input["depth"]}\` (${typeof input["depth"]}).  _Try wrapping it in square brackets._
+**Example**: \`depth: [0]\`, or \`depth: [0, 3]\`, or possibly: \`depth: [${input["depth"]}]\``
+      }
+    ).min(
       1,
-      `At least one item is required, but received: \`[${input["depth"]}]\`.
-**Valid Example**: \`depth: [0]\`, or \`depth: [0, 3]\``
+      `At least one item is required, but got: \`[${input["depth"]}]\`. _Try adding a number to the list._
+**Example**: \`depth: [0]\`, or \`depth: [0, 3]\``
     ).max(
       2,
-      `Maximum of two items allowed, but received: \`[${(_a = input["depth"]) == null ? void 0 : _a.join(", ")}]\`.
-**Valid Example**: \`depth: [${(_b = input["depth"]) == null ? void 0 : _b[0]}]\`, or possibly \`depth: [${(_c = input["depth"]) == null ? void 0 : _c.slice(0, 2).join(", ")}]\``
+      // NOTE: I _could_ do something like:
+      //    or possibly \`depth: [${(<number[] | null>input["depth"])?.slice(0, 2).join(", ")}]\`
+      //    But even that mess isn't safe. What if it's a string or something without join?
+      `Maximum of two items allowed, but got: \`[${input["depth"]}]\`. _Try removing one of the numbers._
+**Example**: \`depth: [${(_b = (_a = input["depth"]) == null ? void 0 : _a[0]) != null ? _b : 0}]\`, or possibly \`depth: [${(_d = (_c = input["depth"]) == null ? void 0 : _c[0]) != null ? _d : 0}, 3]\``
     ).transform((v) => {
       if (v.length === 1)
         return [v[0], Infinity];
       else
         return v;
     }).refine((v) => v[0] <= v[1], {
-      message: "Minimum depth cannot be greater than maximum depth."
+      message: `Minimum depth cannot be greater than maximum depth. _Try swapping the numbers._
+**Example**: \`depth: [0, 3]\`, or possibly: \`depth: [${(_f = (_e = input["depth"]) == null ? void 0 : _e[1]) != null ? _f : 0}, ${(_h = (_g = input["depth"]) == null ? void 0 : _g[0]) != null ? _h : 3}]\``
     }).default([0, Infinity]),
     sort: z.preprocess(
       (v) => {
@@ -14412,21 +14432,36 @@ var codeblock_schema = (input, data) => {
       z.object({
         // TODO: Use a custom zod schema to retain string template literals here
         // https://github.com/colinhacks/zod?tab=readme-ov-file#custom-schemas
-        field: dynamic_enum_schema([
-          ...SIMPLE_EDGE_SORT_FIELDS,
-          ...data.edge_fields.map(
-            (f) => `neighbour-field:${f.label}`
-          )
-        ]),
-        order: z.union([
-          z.enum(["asc", "desc"]),
-          // Something very weird happening...
-          // If a note has two codeblocks, the one that gets rendered first seems to override config in the other?
-          // So when the `sort` field of the second comes in for parsing,
-          // It's already been transformed, and so sort.order is a number, not a string...
-          z.literal(1),
-          z.literal(-1)
-        ]).transform(
+        field: dynamic_enum_schema(
+          [
+            ...SIMPLE_EDGE_SORT_FIELDS,
+            ...data.edge_fields.map(
+              (f) => `neighbour-field:${f.label}`
+            )
+          ],
+          "sort"
+        ),
+        order: z.union(
+          [
+            z.enum(["asc", "desc"]),
+            // Something very weird happening...
+            // If a note has two codeblocks, the one that gets rendered first seems to override config in the other?
+            // So when the `sort` field of the second comes in for parsing,
+            // It's already been transformed, and so sort.order is a number, not a string...
+            z.literal(1),
+            z.literal(-1)
+          ],
+          {
+            // SOURCE: https://github.com/colinhacks/zod/issues/117#issuecomment-1595801389
+            errorMap: (_err, ctx) => ({
+              message: zod_invalid_enum_msg(
+                "sort.order",
+                ["asc", "desc"],
+                ctx.data
+              )
+            })
+          }
+        ).transform(
           (v) => v === "asc" ? 1 : v === "desc" ? -1 : v
         )
       })
@@ -14451,6 +14486,17 @@ var codeblock_schema = (input, data) => {
     return options;
   });
 };
+var CodeblockSchema = {
+  FIELDS,
+  build: build2,
+  error: {
+    zod_not_array_msg,
+    zod_not_string_msg,
+    zod_invalid_enum_msg
+  }
+};
+
+// src/codeblocks/index.ts
 var parse_source = (source, data) => {
   var _a;
   const errors = [];
@@ -14459,18 +14505,21 @@ var parse_source = (source, data) => {
     yaml = (_a = (0, import_obsidian.parseYaml)(source)) != null ? _a : {};
     log.debug("Codeblock > parsed_yaml >", yaml);
   } catch (error) {
-    log.error("Codeblock > parse_source > parseYaml.error", error);
+    log.error("Codeblock > parse_source > ", error);
     errors.push({
       path: "yaml",
       code: "invalid_yaml",
-      message: "Invalid YAML. Check the console for more information (press `Ctrl + Shift + I` to open the console)."
+      message: "Invalid codeblock YAML. Check the console for more information (press `Ctrl + Shift + I` to open the console)."
     });
     return { parsed: null, errors };
   }
-  const parsed = codeblock_schema(yaml, data).safeParse(yaml);
+  const parsed = CodeblockSchema.build(yaml, data).safeParse(yaml);
   if (!parsed.success) {
     errors.push(
-      ...parsed.error.issues.map((issue) => ({
+      ...remove_duplicates_by(
+        parsed.error.issues,
+        (issue) => issue.path.join(".")
+      ).map((issue) => ({
         message: issue.message,
         path: issue.path.join("."),
         code: "invalid_field_value"
@@ -14482,15 +14531,15 @@ var parse_source = (source, data) => {
     };
   }
   const invalid_fields = Object.keys(parsed.data).filter(
-    (key) => !FIELDS.includes(key)
+    (key) => !CodeblockSchema.FIELDS.includes(key)
   );
   if (invalid_fields.length) {
     errors.push({
       path: "yaml",
       code: "invalid_yaml",
-      message: zod_invalid_enum_msg(
+      message: CodeblockSchema.error.zod_invalid_enum_msg(
         "yaml",
-        FIELDS,
+        CodeblockSchema.FIELDS,
         invalid_fields.join(", ")
       )
     });
@@ -14528,7 +14577,8 @@ var postprocess_options = (source_path, parsed, errors, plugin) => {
       errors.push({
         path: "dataview-from",
         code: "invalid_field_value",
-        message: `The given query \`${parsed["dataview-from"]}\` is not a valid Dataview query. You can use \`app.plugins.plugins.dataview.api.pages\` to test your query in the console (press \`Ctrl + Shift + I\` to open the console).`
+        message: `Input \`${parsed["dataview-from"]}\` is not a valid Dataview query. 
+You can use \`app.plugins.plugins.dataview.api.pages("<query>")\` to test your query in the console (press \`Ctrl + Shift + I\` to open the console).`
       });
     }
   }
@@ -14547,7 +14597,6 @@ var update_all = () => {
   }
 };
 var Codeblocks = {
-  FIELDS,
   parse_source,
   postprocess_options,
   register,
@@ -14656,10 +14705,8 @@ var resolve_to_absolute_path = (app, relative_path, source_path) => {
   const folder = app.fileManager.getNewFileParent(source_path, relative_path);
   return Paths.build(folder.path, Paths.basename(relative_path), "md");
 };
-var ify = (path, display, {
-  link_kind
-}) => {
-  switch (link_kind) {
+var ify = (path, display, options) => {
+  switch (options.link_kind) {
     case "none": {
       return display;
     }
@@ -14765,10 +14812,6 @@ var DEFAULT_SETTINGS = {
     {
       label: "prevs",
       fields: ["prev"]
-    },
-    {
-      label: "hierarchy 1",
-      fields: ["up", "down", "same", "next", "prev"]
     }
   ],
   implied_relations: {
@@ -22369,8 +22412,6 @@ var _add_implied_edges_transitive = (graph, plugin, rule, round) => {
       graph,
       start_node,
       rule.chain,
-      // TODO: Based on Lemon's suggestion, we no longer check that edge.round < round.
-      // But isn't that more efficient? To chop off the traversal earlier, than keep on looking?
       (item) => item.edge.target_id !== start_node
     ).forEach((end_node) => {
       const [source_id, target_id] = rule.close_reversed ? [end_node, start_node] : [start_node, end_node];
@@ -27156,12 +27197,15 @@ function create_if_block_5(ctx) {
   arrowdown = new arrow_down_default({ props: { size: ICON_SIZE } });
   return {
     c() {
-      var _a;
+      var _a, _b;
       button = element("button");
       a = element("a");
       create_component(arrowdown.$$.fragment);
-      attr(a, "href", a_href_value = "#BC-edge-field-" + /*settings*/
-      ((_a = ctx[0].edge_fields.last()) == null ? void 0 : _a.label));
+      attr(a, "href", a_href_value = "#" + /*actions*/
+      ctx[2].fields.make_id(
+        /*settings*/
+        (_b = (_a = ctx[0].edge_fields.last()) == null ? void 0 : _a.label) != null ? _b : ""
+      ));
       attr(button, "class", "w-8");
       attr(button, "aria-label", "Jump to bottom");
     },
@@ -27172,10 +27216,13 @@ function create_if_block_5(ctx) {
       current = true;
     },
     p(ctx2, dirty) {
-      var _a;
+      var _a, _b;
       if (!current || dirty[0] & /*settings*/
-      1 && a_href_value !== (a_href_value = "#BC-edge-field-" + /*settings*/
-      ((_a = ctx2[0].edge_fields.last()) == null ? void 0 : _a.label))) {
+      1 && a_href_value !== (a_href_value = "#" + /*actions*/
+      ctx2[2].fields.make_id(
+        /*settings*/
+        (_b = (_a = ctx2[0].edge_fields.last()) == null ? void 0 : _a.label) != null ? _b : ""
+      ))) {
         attr(a, "href", a_href_value);
       }
     },
@@ -27207,8 +27254,11 @@ function create_each_block_5(ctx) {
         /*group_label*/
         ctx[33]
       ),
-      href: "#BC-edge-group-" + /*group_label*/
-      ctx[33],
+      href: "#" + /*actions*/
+      ctx[2].groups.make_id(
+        /*group_label*/
+        ctx[33]
+      ),
       title: "Jump to group. Right click for more actions."
     }
   });
@@ -27249,8 +27299,11 @@ function create_each_block_5(ctx) {
         ctx[33];
       if (dirty[0] & /*settings, filters*/
       3)
-        tag_changes.href = "#BC-edge-group-" + /*group_label*/
-        ctx[33];
+        tag_changes.href = "#" + /*actions*/
+        ctx[2].groups.make_id(
+          /*group_label*/
+          ctx[33]
+        );
       tag.$set(tag_changes);
     },
     i(local) {
@@ -27473,8 +27526,8 @@ function create_key_block(ctx) {
     },
     p(new_ctx, dirty) {
       ctx = new_ctx;
-      if (dirty[0] & /*settings, filters, context_menus*/
-      11) {
+      if (dirty[0] & /*settings, filters, actions, context_menus*/
+      15) {
         each_value_5 = ensure_array_like(
           /*group_labels*/
           ctx[28]
@@ -27607,10 +27660,13 @@ function create_each_block_3(ctx) {
       button.textContent = "X";
       t2 = space();
       key_block.c();
-      attr(input, "id", input_id_value = "BC-edge-field-" + /*field*/
-      ctx[27].label);
+      attr(input, "id", input_id_value = /*actions*/
+      ctx[2].fields.make_id(
+        /*field*/
+        ctx[27].label
+      ));
       attr(input, "type", "text");
-      attr(input, "class", "w-48 scroll-mt-24");
+      attr(input, "class", "w-48 scroll-mt-40");
       attr(input, "placeholder", "Field Label");
       input.value = input_value_value = /*field*/
       ctx[27].label;
@@ -27639,8 +27695,11 @@ function create_each_block_3(ctx) {
     p(new_ctx, dirty) {
       ctx = new_ctx;
       if (!current || dirty[0] & /*settings, filters*/
-      3 && input_id_value !== (input_id_value = "BC-edge-field-" + /*field*/
-      ctx[27].label)) {
+      3 && input_id_value !== (input_id_value = /*actions*/
+      ctx[2].fields.make_id(
+        /*field*/
+        ctx[27].label
+      ))) {
         attr(input, "id", input_id_value);
       }
       if (!current || dirty[0] & /*settings, filters*/
@@ -27691,12 +27750,15 @@ function create_if_block_2(ctx) {
   arrowdown = new arrow_down_default({ props: { size: ICON_SIZE } });
   return {
     c() {
-      var _a;
+      var _a, _b;
       button = element("button");
       a = element("a");
       create_component(arrowdown.$$.fragment);
-      attr(a, "href", a_href_value = "#BC-edge-group-" + /*settings*/
-      ((_a = ctx[0].edge_field_groups.last()) == null ? void 0 : _a.label));
+      attr(a, "href", a_href_value = "#" + /*actions*/
+      ctx[2].groups.make_id(
+        /*settings*/
+        (_b = (_a = ctx[0].edge_field_groups.last()) == null ? void 0 : _a.label) != null ? _b : ""
+      ));
       attr(button, "class", "w-8");
       attr(button, "aria-label", "Jump to bottom");
     },
@@ -27707,10 +27769,13 @@ function create_if_block_2(ctx) {
       current = true;
     },
     p(ctx2, dirty) {
-      var _a;
+      var _a, _b;
       if (!current || dirty[0] & /*settings*/
-      1 && a_href_value !== (a_href_value = "#BC-edge-group-" + /*settings*/
-      ((_a = ctx2[0].edge_field_groups.last()) == null ? void 0 : _a.label))) {
+      1 && a_href_value !== (a_href_value = "#" + /*actions*/
+      ctx2[2].groups.make_id(
+        /*settings*/
+        (_b = (_a = ctx2[0].edge_field_groups.last()) == null ? void 0 : _a.label) != null ? _b : ""
+      ))) {
         attr(a, "href", a_href_value);
       }
     },
@@ -27742,8 +27807,11 @@ function create_each_block_2(ctx) {
         /*field_label*/
         ctx[24]
       ),
-      href: "#BC-edge-field-" + /*field_label*/
-      ctx[24],
+      href: "#" + /*actions*/
+      ctx[2].fields.make_id(
+        /*field_label*/
+        ctx[24]
+      ),
       title: "Jump to field. Right click for more actions."
     }
   });
@@ -27784,8 +27852,11 @@ function create_each_block_2(ctx) {
         ctx[24];
       if (dirty[0] & /*settings, filters*/
       3)
-        tag_changes.href = "#BC-edge-field-" + /*field_label*/
-        ctx[24];
+        tag_changes.href = "#" + /*actions*/
+        ctx[2].fields.make_id(
+          /*field_label*/
+          ctx[24]
+        );
       tag.$set(tag_changes);
     },
     i(local) {
@@ -28007,10 +28078,13 @@ function create_each_block2(ctx) {
       for (let i = 0; i < each_blocks.length; i += 1) {
         each_blocks[i].c();
       }
-      attr(input, "id", input_id_value = "BC-edge-group-" + /*group*/
-      ctx[18].label);
+      attr(input, "id", input_id_value = /*actions*/
+      ctx[2].groups.make_id(
+        /*group*/
+        ctx[18].label
+      ));
       attr(input, "type", "text");
-      attr(input, "class", "w-48 scroll-mt-24");
+      attr(input, "class", "w-48 scroll-mt-40");
       attr(input, "placeholder", "Group Label");
       input.value = input_value_value = /*group*/
       ctx[18].label;
@@ -28064,8 +28138,11 @@ function create_each_block2(ctx) {
     p(new_ctx, dirty) {
       ctx = new_ctx;
       if (!current || dirty[0] & /*settings, filters*/
-      3 && input_id_value !== (input_id_value = "BC-edge-group-" + /*group*/
-      ctx[18].label)) {
+      3 && input_id_value !== (input_id_value = /*actions*/
+      ctx[2].groups.make_id(
+        /*group*/
+        ctx[18].label
+      ))) {
         attr(input, "id", input_id_value);
       }
       if (!current || dirty[0] & /*settings, filters*/
@@ -28073,8 +28150,8 @@ function create_each_block2(ctx) {
       ctx[18].label) && input.value !== input_value_value) {
         input.value = input_value_value;
       }
-      if (dirty[0] & /*settings, filters, context_menus*/
-      11) {
+      if (dirty[0] & /*settings, filters, actions, context_menus*/
+      15) {
         each_value_2 = ensure_array_like(
           /*group*/
           ctx[18].fields
@@ -28654,10 +28731,13 @@ function instance22($$self, $$props, $$invalidate) {
       $$invalidate(4, plugin);
     }),
     fields: {
+      make_id: (label) => `BC-edge-field-${label}`,
       add: () => {
-        settings.edge_fields.push({
+        const field = {
           label: `Edge Field ${settings.edge_fields.length + 1}`
-        });
+        };
+        settings.edge_fields.push(field);
+        setTimeout(() => window.location.hash = actions.fields.make_id(field.label), 0);
         $$invalidate(0, settings.is_dirty = true, settings);
         $$invalidate(4, plugin);
       },
@@ -28723,11 +28803,14 @@ function instance22($$self, $$props, $$invalidate) {
       }
     },
     groups: {
+      make_id: (label) => `BC-edge-group-${label}`,
       add: () => {
-        settings.edge_field_groups.push({
+        const group = {
           label: `Group ${settings.edge_field_groups.length + 1}`,
           fields: []
-        });
+        };
+        settings.edge_field_groups.push(group);
+        setTimeout(() => window.location.hash = actions.groups.make_id(group.label), 0);
         $$invalidate(0, settings.is_dirty = true, settings);
         $$invalidate(4, plugin);
       },
@@ -29431,8 +29514,11 @@ function create_if_block_32(ctx) {
       button = element("button");
       a = element("a");
       create_component(arrowdown.$$.fragment);
-      attr(a, "href", a_href_value = "#BC-transitive-rule-" + /*transitives*/
-      (ctx[3].length - 1));
+      attr(a, "href", a_href_value = "#" + /*actions*/
+      ctx[5].make_id(
+        /*transitives*/
+        ctx[3].length - 1
+      ));
       attr(button, "class", "w-8");
       attr(button, "aria-label", "Jump to bottom");
     },
@@ -29444,8 +29530,11 @@ function create_if_block_32(ctx) {
     },
     p(ctx2, dirty) {
       if (!current || dirty & /*transitives*/
-      8 && a_href_value !== (a_href_value = "#BC-transitive-rule-" + /*transitives*/
-      (ctx2[3].length - 1))) {
+      8 && a_href_value !== (a_href_value = "#" + /*actions*/
+      ctx2[5].make_id(
+        /*transitives*/
+        ctx2[3].length - 1
+      ))) {
         attr(a, "href", a_href_value);
       }
     },
@@ -30190,9 +30279,12 @@ function create_each_block4(key_1, ctx) {
       attr(button2, "aria-label", "Delete Transitive Implied Relation");
       attr(div1, "class", "flex gap-1");
       attr(summary, "class", "flex items-center justify-between gap-2");
-      attr(details, "id", details_id_value = "BC-transitive-rule-" + /*rule_i*/
-      ctx[23]);
-      attr(details, "class", "scroll-mt-24 rounded border p-2 svelte-17indbq");
+      attr(details, "id", details_id_value = /*actions*/
+      ctx[5].make_id(
+        /*rule_i*/
+        ctx[23]
+      ));
+      attr(details, "class", "scroll-mt-40 rounded border p-2 svelte-17indbq");
       this.first = details;
     },
     m(target, anchor) {
@@ -30277,8 +30369,11 @@ function create_each_block4(key_1, ctx) {
         key_block.p(ctx, dirty);
       }
       if (!current || dirty & /*transitives, filter*/
-      12 && details_id_value !== (details_id_value = "BC-transitive-rule-" + /*rule_i*/
-      ctx[23])) {
+      12 && details_id_value !== (details_id_value = /*actions*/
+      ctx[5].make_id(
+        /*rule_i*/
+        ctx[23]
+      ))) {
         attr(details, "id", details_id_value);
       }
       if (dirty & /*opens, transitives, filter*/
@@ -30560,7 +30655,7 @@ function create_fragment27(ctx) {
         if_block1.d(1);
         if_block1 = null;
       }
-      if (dirty & /*transitives, filter, opens, plugin, actions, settings, context_menus*/
+      if (dirty & /*actions, transitives, filter, opens, plugin, settings, context_menus*/
       127) {
         each_value = ensure_array_like(
           /*transitives*/
@@ -30632,14 +30727,17 @@ function instance27($$self, $$props, $$invalidate) {
       yield Promise.all([plugin.saveSettings(), plugin.refresh({ redraw_side_views: true })]);
       $$invalidate(0, plugin);
     }),
+    make_id: (rule_i) => `BC-transitive-rule-${rule_i}`,
     add_transitive: () => {
-      transitives.push({
+      const new_length = transitives.push({
         name: "",
         chain: [],
         rounds: 1,
         close_reversed: false,
         close_field: settings.edge_fields[0].label
       });
+      $$invalidate(4, opens[new_length - 1] = true, opens);
+      setTimeout(() => window.location.hash = actions.make_id(new_length - 1), 0);
       $$invalidate(3, transitives);
       $$invalidate(1, settings.is_dirty = true, settings);
     },
@@ -35820,7 +35918,7 @@ function create_fragment45(ctx) {
       attr(div0, "class", "tree-item-icon collapse-icon");
       attr(span0, "class", "tree-item-inner-text");
       attr(div1, "class", "tree-item-inner");
-      attr(span1, "class", "tree-item-flair");
+      attr(span1, "class", "tree-item-flair font-mono text-lg");
       attr(div2, "class", "tree-item-flair-outer");
       attr(summary, "class", "tree-item-self is-clickable mod-collapsible text-lg");
       attr(div3, "class", "tree-item-children flex flex-col");
@@ -36772,7 +36870,7 @@ function create_fragment47(ctx) {
 function instance47($$self, $$props, $$invalidate) {
   let { plugin } = $$props;
   let { errors } = $$props;
-  const markdown = errors.map((e) => `- \`${e.path}\`: ${e.message}`).join("\n");
+  const markdown = errors.map((e) => `- **\`${e.path}\`**: ${e.message}`).join("\n");
   $$self.$$set = ($$props2) => {
     if ("plugin" in $$props2)
       $$invalidate(0, plugin = $$props2.plugin);

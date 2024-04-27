@@ -50,6 +50,40 @@ Similar to the [[#`fields`]] property, but you can select multiple [[Field Group
 
 _Example_: `field-groups: [ups, downs]`
 
+### `merge-fields`
+
+**Type**: `merge-fields?: true | (false)`
+
+By default, each of the chosen `fields` is [[Reference#Traversal|traversed]] separately. If `merge-fields` is set to `true`, all fields will be traversed together, meaning paths of edges with different [[Edge Fields|fields]] will be shown together.
+
+_Example_: `merge-fields: true`
+
+> [!TIP]
+> Another way to think of this is that `merge-fields: true` will run a _single_ traversal, where all fields are allowed in the path. Whereas `merge-fields: false` will run _multiple_ traversals - one for each field.
+
+Consider the following graph:
+
+```mermaid
+graph LR
+    A -->|down| B
+    B -->|child| C
+```
+
+Starting from node `A`, and `merge-fields: false`, the result would just be:
+
+```markdown
+- B
+```
+
+Because `A` doesn't have any `child` edges leaving it, so only the `down` traversal has results. But with `merge-fields: true`, the result would be:
+
+```markdown
+- B
+  - C
+```
+
+Because the `down` and `child` edges are traversed together - paths with _either_ field are shown.
+
 ### `title`
 
 **Type**: `title?: string`

@@ -1,8 +1,8 @@
-The _Matrix View_ appears on the side of the editor, and shows the **immediate outgoing neighbours** of the current note.
-
-On the right side of each link, you'll see an `x` or `i`, indicating if that edge is [[Explicit Edge Builders|explicit]] or [[Implied Edge Builders|implied]]. Hover over the icon to see the [[Reference#Edge Attributes|source]] of real edges, and the [[Reference#Edge Attributes|kind]] of implied edges (as well as the [[Implied Relation Rounds|round]] they were added in).
+The _Matrix View_ appears on the side of the editor, and shows the **immediate outgoing neighbours** of the current note, grouped by their [[Edge Fields|field]].
 
 ![[Matrix View.png]]
+
+On the right side of each link, you'll see an `x` or `i`, indicating if that edge is [[Explicit Edge Builders|explicit]] or [[Implied Edge Builders|implied]]. Hover over the icon to see the [[Reference#Edge Attributes|source]] of real edges, and the [[Reference#Edge Attributes|kind]] of implied edges (as well as the [[Implied Relation Rounds|round]] they were added in).
 
 ## Settings
 

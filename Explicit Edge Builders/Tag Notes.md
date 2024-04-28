@@ -33,7 +33,8 @@ If you want to only add edges to notes that _exactly_ match the tag, you can add
 ```yaml
 ---
 BC-tag-note-exact: true
+BC-tag-note-tag: "#markdown"
 ---
 ```
 
-If you don't add this field, Breadcrumbs will add edges to all notes that _contain_ the tag. e.g. `#tag/child` contains `#tag`.
+If you don't add this field, Breadcrumbs will add edges to all notes that _contain_ the tag. e.g. `#markdown/links` contains `#markdown`.

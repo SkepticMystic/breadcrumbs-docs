@@ -7,10 +7,10 @@ BC-regex-note-field: "<field>"
 ---
 ```
 
-Where `<regex>` is a valid JavaScript regex (without the surrounding `/`), and `<field>` is one of your [[Edge Fields|edge fields]]. This will tell Breadcrumbs to find all notes that match the regex (using the _full path_ of the note), and add edges from the regex note to the matches using the field you specify.
+Where `<regex>` is a valid JavaScript regex (without the surrounding `/`), and `<field>` is one of your [[Edge Fields|edge fields]]. This will tell Breadcrumbs to find all notes that match the regex (using the **full path** of the note), and add edges from the regex note to the matches using the field you specify.
 
 > [!NOTE]
-> The `BC-regex-note-regex` value gets passed directly to the Javascript [RegExp](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp) constructor.
+> The `BC-regex-note-regex` value gets passed directly to the Javascript [RegExp](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp) constructor, so you can use that to troubleshoot your regex.
 
 For example, find all notes with the word `psychology` in the path, and point `down` to them:
 
@@ -31,10 +31,16 @@ graph TB
 You can also add flags to the regex by adding the `BC-regex-note-flags` field to the frontmatter of the regex note.
 
 ```yaml
+---
 BC-regex-note-flags: "<flags>"
+---
 ```
 
 Where `<flags>` is a string of any combination of `g`, `i`, and `m` (for global, case-insensitive, and multi-line, respectively). e.g. `gim` would add all three flags.
+
+> [!TIP]
+> In practice, the most useful flag is `i`, to match case-insensitively.
+> i.e. `BC-regex-note-flags: "i"`
 
 ## Settings
 

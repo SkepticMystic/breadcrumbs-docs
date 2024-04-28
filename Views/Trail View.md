@@ -4,6 +4,11 @@ The Trail View shows all paths going _up_ from the current note. In this example
 
 ![[view.page.trail.grid.png]]
 
+> [!IMPORTANT]
+> Read the Trail View from right-to-left. The right-most notes are the immediate neighbours of the current note. As you move further left, the notes get further away from the current note. Similar to how the File Explorer shows your current folder path from highest-to-lowest:
+>
+> ![[File Explorer Path Breadcrumbs.png]]
+
 ## Settings
 
 Change under `Settings > Views > Page > Trail`

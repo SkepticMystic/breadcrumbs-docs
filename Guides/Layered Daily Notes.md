@@ -49,6 +49,11 @@ month: "[[<% tp.date.now("YYYY-MM") %>]]"
 - [ ]
 ```
 
+```mermaid
+graph BT
+	2(2024-04-27) -->|month| 1(2024-04)
+```
+
 > [!NOTE]
 > Don't worry about the `tomorrow` field just yet, we'll use that later.
 
@@ -74,6 +79,12 @@ fields: [days]
 
 Now each Monthly Note will point `up` to the corresponding Yearly Note, and `next` to the month after it. A [[Codeblocks|codeblock tree]] lists all daily notes from the current month.
 
+```mermaid
+graph BT
+	1(2024-04) -->|year| 2(2024)
+	1 -->|next-month| 3(2024-05)
+```
+
 ### 4. Date Notes
 
 [[Date Notes]] use the date format of your existing Daily Notes to add edges between them in chronological order. To enable this:
@@ -87,6 +98,11 @@ Now each Monthly Note will point `up` to the corresponding Yearly Note, and `nex
 ![[Layered Daily Notes Date Note Settings.png]]
 
 Now edge of your Daily Notes should automatically point `tomorrow` to the following day's note.
+
+```mermaid
+flowchart LR
+	1(2022-01-01) -->|tomorrow| 2(2022-01-02) -->|tomorrow| 3(2022-01-03)
+```
 
 ### 5. Implied Relationships
 

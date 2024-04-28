@@ -2,6 +2,8 @@ The Previous-Next View shows the immediate `previous` and `next` neighbours of t
 
 ![[view.page.prev-next.png]]
 
+A common use-case for this view is to see your Daily Notes for `yesterday` and `tomorrow` from the current note. See the [[Layered Daily Notes]] guide for more details on this example.
+
 ## Settings
 
 Change under `Settings > Views > Page > Previous/Next`

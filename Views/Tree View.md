@@ -1,4 +1,4 @@
-The Tree View shows up on the side of the editor, and shows all paths in a chosen [[Field Groups|field group]] from the current note.
+The Tree View appears on the side of the editor, and shows all paths with a chosen [[Field Groups|field group]], starting from the current note. By default, it shows all paths going `down`. This image shows paths going either `up` or `down`:
 
 ![[Tree View.png]]
 

@@ -31,7 +31,7 @@ child:: [[B]], [[C]]
 This creates the same structure as the [[Typed Links#Frontmatter Links|frontmatter links]] method above.
 
 > [!TIP]
-> Use the [[Edge Field Suggestor]] to speed up adding Dataview typed-links
+> Use the [[Edge Field Suggester]] to speed up adding Dataview typed-links
 
 ### Markdown Links
 

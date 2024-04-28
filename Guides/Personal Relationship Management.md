@@ -1,5 +1,8 @@
 Similar to [Monica](https://github.com/monicahq/monica), Breadcrumbs can be used to manage personal relationships. Vanilla Obsidian can easily handle alot of the functionality of a personal CRM, but Breadcrumbs is particularly helpful when it comes to noting relationships between people, and inferring more complex relations from those.
 
+Using just a handful of simple, manual relations, we can automatically build complex networks of personal connections. For example, in a basic setup starting with the note `[[Myself]]`:
+
+![[Personal Relationship Management Mermaid Diagram.png]]
 ## Steps
 
 ### 1. Edge Fields

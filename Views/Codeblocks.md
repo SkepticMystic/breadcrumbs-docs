@@ -1,4 +1,4 @@
-Breadcrumbs adds a new codeblock language, `breadcrumbs`. Currently, this can be used to render a tree of all paths in a given direction from the current note (similar to the [[Tree View]], or a [Mermaid](https://mermaid.js.org) graph of the same data. The source is parsed as **YAML**:
+Breadcrumbs adds a new codeblock language, `breadcrumbs`. Currently, this can be used to render a tree of all paths in a given direction from the current note (similar to the [[Tree View]]), or a [Mermaid](https://mermaid.js.org) graph of the same data. The codeblocks use **YAML**, for example:
 
 ```yaml
 type: tree
@@ -7,17 +7,19 @@ depth: [0, 3]
 sort: basename asc
 ```
 
-The above example would render a markdown list of all paths pointing _down_ from the current note, up to a depth of 3, sorted by the basename of the notes, in ascending order.
+This would render a markdown list of all paths pointing _down_ from the current note, up to a depth of 3, sorted by the basename of the notes, in ascending order.
 
 ![[view.codeblock.tree.png]]
 
 ## Available Fields
 
-The following fields can be added to the codeblock to customise the output. Optional fields are marked with a `?`, and their default values are shown in `(parentheses)`.
+The following fields can be added to the codeblock to customise the output. Below the heading name for each field, you'll see the possible values/options for that field, as well as it's default value in (parentheses). Optional fields are marked with a `?`. If you want to use the default value, then you don't need to add that field to the codeblock.
 
 ### `type`
 
-**Type**: `type?: (tree) | mermaid`
+```ts
+type?: (tree) | mermaid
+```
 
 How to visualise the results.
 
@@ -28,7 +30,9 @@ How to visualise the results.
 
 ### `start-note`
 
-**Type**: `start-note?: string`
+```ts
+start-note?: string
+```
 
 Override the starting note of the [[Reference#Traversal|traversal]]. By default, the note that the codeblock is in will be used.
 
@@ -36,25 +40,31 @@ _Example_: `start-note: folder/note.md`
 
 ### `fields`
 
-**Type**: `fields?: string[]`
+```ts
+fields?: string[]
+```
 
-Filter edges by a list of your [[Edge Fields|edge fields]].
+Filter edges by a list of your [[Edge Fields|edge fields]]. By default, all of your edge fields will be used.
 
 _Example_: `fields: [up, same]`
 
 ### `field-groups`
 
-**Type**: `field-groups?: string[]`
+```ts
+field-groups?: string[]
+```
 
-Similar to the [[#`fields`]] property, but you can select multiple [[Field Groups|field groups]] instead of individual fields.
+Similar to the [[#`fields`]] property, but you can select multiple [[Field Groups|field groups]] instead of individual fields. By default, all fields (and therefore all groups) will be used.
 
 _Example_: `field-groups: [ups, downs]`
 
 ### `merge-fields`
 
-**Type**: `merge-fields?: true | (false)`
+```ts
+merge-fields?: (true) | false
+```
 
-By default, each of the chosen `fields` is [[Reference#Traversal|traversed]] separately. If `merge-fields` is set to `true`, all fields will be traversed together, meaning paths of edges with different [[Edge Fields|fields]] will be shown together.
+If `false`, each of the chosen `fields` is [[Reference#Traversal|traversed]] separately. If `merge-fields` is set to `true`, all fields will be traversed together, meaning paths of edges with different [[Edge Fields|fields]] will be shown together.
 
 _Example_: `merge-fields: true`
 
@@ -86,7 +96,9 @@ Because the `down` and `child` edges are traversed together - paths with _either
 
 ### `title`
 
-**Type**: `title?: string`
+```ts
+title?: string
+```
 
 Add a title above the codeblock.
 
@@ -94,7 +106,9 @@ _Example_: `title: Breadcrumbs Codeblock`
 
 ### `depth`
 
-**Type**: `depth?: [number] | [number, number]`
+```ts
+depth?: [number] | [number, number]
+```
 
 Filter edges by a depth range.
 
@@ -108,7 +122,9 @@ By default, all depths are shown.
 
 ### `flat`
 
-**Type**: `flat?: true | (false)`
+```ts
+flat?: true | (false)
+```
 
 Flatten the tree results into a un-nested list.
 
@@ -116,7 +132,9 @@ _Example_: `flat: true`
 
 ### `dataview-from`
 
-**Type**: `dataview-from?: string`
+```ts
+dataview-from?: string
+```
 
 Filter edges by a [Dataview](http://blacksmithgu.github.io/obsidian-dataview/) query.
 
@@ -124,15 +142,19 @@ _Example_: `dataview-from: "#tag and !'Folder'"`
 
 ### `show-attributes`
 
-**Type**: `show-attributes?: EdgeAttribute[]`
+```ts
+show-attributes?: EdgeAttribute[]
+```
 
-Show specific [[Reference#Edge Attributes|edge attributes]] about each item in the result.
+Show specific [[Reference#Edge Attributes|edge attributes]] about each item in the result. By default, none are shown.
 
 _Example_: `show-attributes: [field, source]`
 
 ### `sort`
 
-**Type**: `sort?: <field> (asc) | desc`
+```ts
+sort?: <field> (asc) | desc
+```
 
 Order the results using a given [[Reference#Edge Sorters|edge sorter]].
 
@@ -140,7 +162,9 @@ _example_: `sort: path desc`
 
 ### `mermaid-direction`
 
-**Type**: `mermaid-direction?: LR | RL | TB | BT`
+```ts
+mermaid-direction?: LR | RL | TB | BT
+```
 
 The [direction](https://mermaid.js.org/syntax/flowchart.html#direction) of the mermaid graph (if `type: mermaid`). Meaning:
 
@@ -153,7 +177,9 @@ _Example_: `mermaid-direction: TB`
 
 ### `mermaid-renderer`
 
-**Type**: `mermaid-renderer?: (dagre) | elk`
+```ts
+mermaid-renderer?: (dagre) | elk
+```
 
 The [renderer](https://mermaid.js.org/syntax/flowchart.html#renderer) to use for the mermaid graph.
 
@@ -161,3 +187,25 @@ The [renderer](https://mermaid.js.org/syntax/flowchart.html#renderer) to use for
 - `elk` is more experimental, but can handle larger graphs.
 
 _Example_: `mermaid-renderer: elk`
+
+### `mermaid-curve`
+
+```ts
+mermaid-curve?: 
+	| (basis)
+	| bumpX
+	| bumpY
+	| cardinal
+	| catmullRom
+	| linear
+	| monotoneX
+	| monotoneY
+	| natural
+	| step
+	| stepAfter
+	| stepBefore
+```
+
+The [curve style](https://mermaid.js.org/syntax/flowchart.html#styling-line-curves) to use for the mermaid graph.
+
+_Example_: `mermaid-curve: natural`

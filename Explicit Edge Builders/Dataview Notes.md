@@ -1,4 +1,4 @@
-_Dataview Notes_ allow you to use the [Dataview plugin](https://github.com/blacksmithgu/obsidian-dataview) query engine to add edges to the graph. You can turn a note into a dataview note by adding the following to your frontmatter:
+_Dataview Notes_ allow you to use the [Dataview plugin](https://github.com/blacksmithgu/obsidian-dataview) query engine to add edges to the graph. You can turn a note into a Dataview Note by adding the following to your frontmatter:
 
 ```yaml
 ---
@@ -7,9 +7,9 @@ BC-dataview-note-field: "<field>"
 ---
 ```
 
-Where `<query>` is a valid Dataview query, and `<field>` is one of your [[Edge Fields|edge fields]]. Breadcrumbs will ask Dataview for all notes that match the query, and add edges from the current note to those notes using the field you specify.
+Where `<query>` is a valid Dataview query, and `<field>` is one of your [[Edge Fields|edge fields]].
 
-For example, the following query will add `child` edges from the current note to all notes that contain the tag `#tag` and are in the folder "Folder":
+Breadcrumbs will ask Dataview for all notes that match the query, and add edges from the current note to those notes using the field you specify. For example, the following query will add `child` edges from the current note to all notes that contain the tag `#tag` and are in the folder "Folder":
 
 ```yaml
 ---
@@ -23,7 +23,7 @@ BC-dataview-note-query: '"#tag" AND "Folder"'
 >
 > ```ts
 > app.plugins.plugins.dataview.api.pages(
-> "<query>",
-> app.workspace.getActiveFile()?.path ?? ""
+>   "<query>",
+>   app.workspace.getActiveFile()?.path ?? ""
 > );
 > ```

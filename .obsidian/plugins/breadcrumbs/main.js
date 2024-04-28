@@ -22283,27 +22283,23 @@ var _add_explicit_edges_typed_link = (graph, plugin, all_files) => {
         } else if (typeof target_link === "object" && (target_link == null ? void 0 : target_link.path)) {
           unsafe_target_path = target_link.path;
         } else if (
-          //@ts-ignore: instanceof didn't work here?
+          // @ts-expect-error: instanceof didn't work here?
           target_link == null ? void 0 : target_link.isLuxonDateTime
         ) {
-          log.debug(
-            "builder:typed-link > Ignoring DateTime for field:",
-            field
-          );
-          return;
-        } else {
-          log.warn(
-            "builder:typed-link > Invalid target_link type",
-            target_link
-          );
-        }
-        if (!unsafe_target_path) {
-          return errors.push({
+          errors.push({
+            path: source_file.path,
             code: "invalid_field_value",
-            message: `Invalid field value for '${field}'`,
-            path: source_file.path
+            message: `Invalid value for field '${field}': '${target_link}'. Dataview DateTime values are not supported, since they don't preserve the original date string.`
+          });
+        } else {
+          errors.push({
+            path: source_file.path,
+            code: "invalid_field_value",
+            message: `Invalid value for field '${field}': '${target_link}'. Expected wikilink or markdown link.`
           });
         }
+        if (!unsafe_target_path)
+          return;
         const [target_path, target_file] = resolve_relative_target_path(
           plugin.app,
           unsafe_target_path,

@@ -110,15 +110,25 @@ _Example_: `title: Breadcrumbs Codeblock`
 depth?: [number] | [number, number]
 ```
 
-Filter edges by a depth range.
+Filter edges by a depth range. The min and max values are both _inclusive_.
 
 _Example_:
 
-- `depth: [0, 3]` would show all paths 3 levels deep and shallower
-- `depth: [1, 3]` would show all paths between 1 and 3 levels deep
-- `depth: [3]` would show all paths _atleast_ 3 levels deep
+- `depth: [0, 3]` - show all paths 3 levels deep and shallower
+- `depth: [1, 3]` - show all paths between 1 and 3 levels deep
+- `depth: [3]` - show all paths _atleast_ 3 levels deep
 
 By default, all depths are shown.
+
+### `collapse`
+
+```ts
+collapse?: true | (false)
+```
+
+If `type: tree`, and `collapse: true`, all nested lists will be collapsed/folded closed.
+
+_Example_: `collapse: true`
 
 ### `flat`
 
@@ -138,7 +148,7 @@ dataview-from?: string
 
 Filter edges by a [Dataview](http://blacksmithgu.github.io/obsidian-dataview/) query.
 
-_Example_: `dataview-from: "#tag and !'Folder'"`
+_Example_: `dataview-from: '#tag and !"Folder"'`
 
 ### `show-attributes`
 
@@ -158,7 +168,7 @@ sort?: <field> (asc) | desc
 
 Order the results using a given [[Reference#Edge Sorters|edge sorter]].
 
-_example_: `sort: path desc`
+_Example_: `sort: basename`, or `sort: path desc`, or `sort: neighbour-field:next`
 
 ### `mermaid-direction`
 
@@ -209,3 +219,21 @@ mermaid-curve?:
 The [curve style](https://mermaid.js.org/syntax/flowchart.html#styling-line-curves) to use for the mermaid graph.
 
 _Example_: `mermaid-curve: natural`
+
+## Examples
+
+### Simulate the Matrix View
+
+You can show similar results to the [[Matrix View]] using the following codeblock:
+
+```yaml
+type: tree
+# Only show the top-level edges
+depth: [0, 0]
+# Show the `field` attribute next to each edge item
+show-attributes: [field]
+# Sort the results by their field name, effectively "grouping" by field
+sort: field
+```
+
+![[Codeblock Matrix View.png]]

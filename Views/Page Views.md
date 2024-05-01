@@ -1,4 +1,3 @@
-
 The Page Views appear at the top of the current note. They comprise two subviews:
 
 - [[Trail View]]

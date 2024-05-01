@@ -10,7 +10,7 @@
 
 These updates are currently only available in the V4 beta via the BRAT plugin. Let me know your thoughts, I'm always looking for feedback, especially as the beta gets closer to being stable! All changes are documented in the [README](https://github.com/SkepticMystic/breadcrumbs), if you've got any questions, please do ask in ⁠breadcrumbs. Thank you to everyone that helped suggest/test these changes 💚
 
-![image.png](https://cdn.discordapp.com/attachments/855181471643861002/1226248518683857059/image.png?ex=662b542d&is=662a02ad&hm=cc43f4489f49cfd004d6cc20a682b2036d61f666a2839969a999d23f341e9c33&)
+![[Binary Tree Mermaid Diagram.png]]
 
 ---
 

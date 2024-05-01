@@ -3,6 +3,20 @@ Welcome to the Breadcrumbs docs 🍞 Here you can find more detailed explanation
 > [!INFO]
 > Breadcrumbs lets you add _typed links_ to your notes. You supply the structure, Breadcrumbs helps you leverage it.
 
+## Use-cases
+
+**Auto-generated Table of Contents**
+
+![[Codeblock Table of Contents.png]]
+
+**Speedy navigation between related notes**
+
+![[Daily Note Page Views.png]]
+
+**Visualise Complex Hierarchies**
+
+![[Myself Personal Relationships Views.png]]
+
 ## Quick Start
 
 To quickly see one way Breadcrumbs works, you can do the following:
@@ -39,3 +53,4 @@ Breadcrumbs gives the following benefits:
 - Use the [[Views|Views]] to see your fields in action
 	- These general run a [[Reference#Traversal|graph traversal]] and present the results in some way
 - Try out the [[Commands|Commands]] to do other useful stuff
+	- Quickly jump to neighbouring notes, summarise your graph, "freeze" implied edges to your notes for future-proofing

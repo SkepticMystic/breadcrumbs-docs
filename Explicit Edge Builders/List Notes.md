@@ -47,14 +47,14 @@ flowchart LR
 	1(List Note) -- down --> 2(A) -- child --> 3(B)
 ```
 
-## `BC-list-note-exclude`
+## `BC-list-note-exclude-index`
 
-By default, the list note itself links to the top-level list items. You can exclude this behaviour by adding the `BC-list-note-exclude` field to the frontmatter of the list note.
+By default, the list note itself links to the top-level list items. You can exclude this behaviour by adding the `BC-list-note-exclude-index` field to the frontmatter of the list note.
 
 ```yaml
 ---
 BC-list-note-field: "down"
-BC-list-note-exclude: true
+BC-list-note-exclude-index: true
 ---
 ```
 

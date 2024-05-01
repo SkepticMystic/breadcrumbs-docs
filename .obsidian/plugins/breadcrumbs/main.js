@@ -14088,6 +14088,20 @@ var url_search_params = (obj, options) => {
 // src/utils/mermaid.ts
 var MERMAID_DIRECTIONS = ["LR", "RL", "TB", "BT"];
 var MERMAID_RENDERER = ["dagre", "elk"];
+var MERMAID_CURVE_STYLES = [
+  "basis",
+  "bumpX",
+  "bumpY",
+  "cardinal",
+  "catmullRom",
+  "linear",
+  "monotoneX",
+  "monotoneY",
+  "natural",
+  "step",
+  "stepAfter",
+  "stepBefore"
+];
 var build_arrow = (e) => e.attr.explicit ? "-->" : "-.->";
 var build_attrs = (attr2, show_attributes) => {
   const params = (show_attributes == null ? void 0 : show_attributes.length) ? url_search_params(untyped_pick(attr2, show_attributes), {
@@ -14097,14 +14111,20 @@ var build_attrs = (attr2, show_attributes) => {
 };
 var from_edges = (edges, config) => {
   var _a, _b, _c, _d, _e;
-  const { direction, kind, renderer, get_node_label } = Object.assign(
-    { direction: "LR", kind: "flowchart", renderer: "dagre" },
-    remove_nullish_keys(config != null ? config : {})
+  const resolved = Object.assign(
+    { direction: "LR", kind: "flowchart" },
+    remove_nullish_keys(
+      config != null ? config : {}
+    )
   );
+  const flowchart_init = remove_nullish_keys({
+    curve: resolved.curve_style,
+    defaultRenderer: resolved.renderer
+  });
   const lines = [
     // NOTE: Regardless of kind, the below field should always be flowchart
-    `%%{init: {"flowchart": {"defaultRenderer": "${renderer}"}} }%%`,
-    `${kind} ${direction}`
+    `%%{ init: { "flowchart": ${JSON.stringify(flowchart_init)} } }%%`,
+    `${resolved.kind} ${resolved.direction}`
   ];
   const node_map = remove_duplicates_by(
     // NOTE: This is _pretty_ inefficient, but necessary.
@@ -14116,11 +14136,11 @@ var from_edges = (edges, config) => {
     (n2) => n2.path
   ).reduce(
     (map, node, i) => {
-      var _a2;
+      var _a2, _b2;
       return map.set(node.path, {
         i,
         attr: node.attr,
-        label: (_a2 = get_node_label == null ? void 0 : get_node_label(node.path, node.attr)) != null ? _a2 : node.path
+        label: (_b2 = (_a2 = resolved.get_node_label) == null ? void 0 : _a2.call(resolved, node.path, node.attr)) != null ? _b2 : node.path
       });
     },
     /* @__PURE__ */ new Map()
@@ -14135,7 +14155,7 @@ var from_edges = (edges, config) => {
       node_map.get(edge.source_id).i,
       node_map.get(edge.target_id).i
     ];
-    const opposing_edge_i = (config == null ? void 0 : config.collapse_opposing_edges) !== false ? mermaid_edges.findIndex(
+    const opposing_edge_i = resolved.collapse_opposing_edges !== false ? mermaid_edges.findIndex(
       (existing) => (
         // NOTE: This is pretty intense, all opposing edges will collapse, because now there's no direction semantics
         target_i === existing.source_i && source_i === existing.target_i
@@ -14148,7 +14168,7 @@ var from_edges = (edges, config) => {
         arrow: build_arrow(edge),
         attr: edge.attr,
         collapsed_attr: Object.fromEntries(
-          (_b = (_a = config == null ? void 0 : config.show_attributes) == null ? void 0 : _a.map((attr2) => {
+          (_b = (_a = resolved.show_attributes) == null ? void 0 : _a.map((attr2) => {
             var _a2;
             return [
               attr2,
@@ -14162,8 +14182,8 @@ var from_edges = (edges, config) => {
       });
     } else {
       const existing = mermaid_edges[opposing_edge_i];
-      existing.arrow = edge.attr.explicit || existing.attr.explicit ? "<-->" : "<-.->";
-      (_c = config == null ? void 0 : config.show_attributes) == null ? void 0 : _c.forEach((attr2) => {
+      existing.arrow = edge.attr.explicit || existing.attr.explicit ? "---" : "-.-";
+      (_c = resolved.show_attributes) == null ? void 0 : _c.forEach((attr2) => {
         var _a2;
         existing.collapsed_attr[attr2].add(
           // @ts-ignore: If the property is not in the object, it will be undefined
@@ -14180,16 +14200,16 @@ var from_edges = (edges, config) => {
           [...set.values()].join("|")
         ])
       ),
-      config == null ? void 0 : config.show_attributes
+      resolved.show_attributes
     );
     lines.push(`	${source_i} ${arrow}${attrs} ${target_i}`);
   });
   lines.push("");
-  const active_note_i = (config == null ? void 0 : config.active_node_id) ? (_d = node_map.get(config == null ? void 0 : config.active_node_id)) == null ? void 0 : _d.i : void 0;
+  const active_note_i = resolved.active_node_id ? (_d = node_map.get(resolved.active_node_id)) == null ? void 0 : _d.i : void 0;
   if (active_note_i !== void 0) {
     lines.push(`	class ${active_note_i} BC-active-node`);
   }
-  switch ((_e = config == null ? void 0 : config.click) == null ? void 0 : _e.method) {
+  switch ((_e = resolved.click) == null ? void 0 : _e.method) {
     case "class": {
       const nodes = [...node_map.values()];
       if (nodes.length) {
@@ -14209,7 +14229,7 @@ var from_edges = (edges, config) => {
       node_map.forEach((node, path) => {
         var _a2;
         lines.push(
-          `	click ${node.i} "${(_a2 = config.click) == null ? void 0 : _a2.getter(path, node.attr)}"`
+          `	click ${node.i} "${(_a2 = resolved.click) == null ? void 0 : _a2.getter(path, node.attr)}"`
         );
       });
       break;
@@ -14218,7 +14238,7 @@ var from_edges = (edges, config) => {
       node_map.forEach((node) => {
         var _a2;
         lines.push(
-          `	click ${node.i} call ${(_a2 = config.click) == null ? void 0 : _a2.callback_name}()`
+          `	click ${node.i} call ${(_a2 = resolved.click) == null ? void 0 : _a2.callback_name}()`
         );
       });
       break;
@@ -14247,7 +14267,8 @@ var Mermaid = {
   to_image_link,
   to_live_edit_link,
   RENDERERS: MERMAID_RENDERER,
-  DIRECTIONS: MERMAID_DIRECTIONS
+  DIRECTIONS: MERMAID_DIRECTIONS,
+  CURVE_STYLES: MERMAID_CURVE_STYLES
 };
 
 // src/codeblocks/schema.ts
@@ -14267,7 +14288,8 @@ var FIELDS = [
   "field-prefix",
   "show-attributes",
   "mermaid-direction",
-  "mermaid-renderer"
+  "mermaid-renderer",
+  "mermaid-curve"
 ];
 var zod_not_string_msg = (field, received) => `Expected a string (text), but got: \`${received}\` (${typeof received}). _Try wrapping the value in quotes._
 **Example**: \`${field}: "${received}"\``;
@@ -14341,7 +14363,7 @@ var build2 = (input, data) => {
         BOOLEANS,
         input["merge-fields"]
       )
-    }).default(false),
+    }).default(true),
     content: z.enum(["open", "closed"], {
       message: zod_invalid_enum_msg(
         "content",
@@ -14368,6 +14390,13 @@ var build2 = (input, data) => {
         "mermaid-direction",
         Mermaid.DIRECTIONS,
         input["mermaid-direction"]
+      )
+    }).optional(),
+    "mermaid-curve": z.enum(Mermaid.CURVE_STYLES, {
+      message: zod_invalid_enum_msg(
+        "mermaid-curve",
+        Mermaid.CURVE_STYLES,
+        input["mermaid-curve"]
       )
     }).optional(),
     "show-attributes": z.array(z.enum(EDGE_ATTRIBUTES), {
@@ -14484,6 +14513,17 @@ var build2 = (input, data) => {
       }
     }
     return options;
+  }).superRefine((options, ctx) => {
+    if (options["mermaid-curve"] && options["mermaid-renderer"]) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["mermaid-curve"],
+        message: `Cannot specify both a mermaid curve and a renderer. _Try removing one of the fields._
+**Example**: \`mermaid-curve: ${options["mermaid-curve"]}\`, or \`mermaid-renderer: ${options["mermaid-renderer"]}\``
+      });
+      return false;
+    }
+    return true;
   });
 };
 var CodeblockSchema = {
@@ -14521,8 +14561,8 @@ var parse_source = (source, data) => {
         (issue) => issue.path.join(".")
       ).map((issue) => ({
         message: issue.message,
-        path: issue.path.join("."),
-        code: "invalid_field_value"
+        code: "invalid_field_value",
+        path: issue.path.map((key) => typeof key === "number" ? key + 1 : key).join(" > ")
       }))
     );
     return {
@@ -14537,11 +14577,7 @@ var parse_source = (source, data) => {
     errors.push({
       path: "yaml",
       code: "invalid_yaml",
-      message: CodeblockSchema.error.zod_invalid_enum_msg(
-        "yaml",
-        CodeblockSchema.FIELDS,
-        invalid_fields.join(", ")
-      )
+      message: `The following is not a valid codeblock field: \`${invalid_fields[0]}\`. Valid options are: ${CodeblockSchema.FIELDS.join(", ")}`
     });
   }
   return { parsed: parsed.data, errors };
@@ -14817,35 +14853,35 @@ var DEFAULT_SETTINGS = {
   implied_relations: {
     transitive: [
       {
-        name: "Opposite Direction: up/down",
+        name: "",
         rounds: 1,
         chain: [{ field: "up" }],
         close_field: "down",
         close_reversed: true
       },
       {
-        name: "Opposite Direction: down/up",
+        name: "",
         rounds: 1,
         chain: [{ field: "down" }],
         close_field: "up",
         close_reversed: true
       },
       {
-        name: "Opposite Direction: same/same",
+        name: "",
         rounds: 1,
         chain: [{ field: "same" }],
         close_field: "same",
         close_reversed: true
       },
       {
-        name: "Opposite Direction: next/prev",
+        name: "",
         rounds: 1,
         chain: [{ field: "next" }],
         close_field: "prev",
         close_reversed: true
       },
       {
-        name: "Opposite Direction: prev/next",
+        name: "",
         rounds: 1,
         chain: [{ field: "prev" }],
         close_field: "next",
@@ -30166,24 +30202,17 @@ function create_each_block4(key_1, ctx) {
   );
   let t1;
   let t2;
-  let t3_value = (
-    /*rule*/
-    ctx[22].rounds + ""
-  );
-  let t3;
-  let t4;
-  let t5;
   let div1;
   let button0;
   let arrowup;
   let button0_disabled_value;
-  let t6;
+  let t3;
   let button1;
   let arrowdown;
   let button1_disabled_value;
-  let t7;
+  let t4;
   let button2;
-  let t9;
+  let t6;
   let previous_key = (
     /*rule*/
     ctx[22]
@@ -30251,20 +30280,17 @@ function create_each_block4(key_1, ctx) {
       t0 = space();
       code = element("code");
       t1 = text(t1_value);
-      t2 = text(" (");
-      t3 = text(t3_value);
-      t4 = text(" rounds)");
-      t5 = space();
+      t2 = space();
       div1 = element("div");
       button0 = element("button");
       create_component(arrowup.$$.fragment);
-      t6 = space();
+      t3 = space();
       button1 = element("button");
       create_component(arrowdown.$$.fragment);
-      t7 = space();
+      t4 = space();
       button2 = element("button");
       button2.textContent = "X";
-      t9 = space();
+      t6 = space();
       key_block.c();
       attr(div0, "class", "flex items-center gap-2");
       button0.disabled = button0_disabled_value = /*rule_i*/
@@ -30291,19 +30317,16 @@ function create_each_block4(key_1, ctx) {
       append(div0, t0);
       append(div0, code);
       append(code, t1);
-      append(code, t2);
-      append(code, t3);
-      append(code, t4);
-      append(summary, t5);
+      append(summary, t2);
       append(summary, div1);
       append(div1, button0);
       mount_component(arrowup, button0, null);
-      append(div1, t6);
+      append(div1, t3);
       append(div1, button1);
       mount_component(arrowdown, button1, null);
-      append(div1, t7);
+      append(div1, t4);
       append(div1, button2);
-      append(details, t9);
+      append(details, t6);
       key_block.m(details, null);
       details.open = /*opens*/
       ctx[4][
@@ -30336,10 +30359,6 @@ function create_each_block4(key_1, ctx) {
       12) && t1_value !== (t1_value = /*name*/
       ctx[24] + ""))
         set_data(t1, t1_value);
-      if ((!current || dirty & /*transitives, filter*/
-      12) && t3_value !== (t3_value = /*rule*/
-      ctx[22].rounds + ""))
-        set_data(t3, t3_value);
       if (!current || dirty & /*transitives, filter*/
       12 && button0_disabled_value !== (button0_disabled_value = /*rule_i*/
       ctx[23] === 0)) {
@@ -30728,7 +30747,9 @@ function instance27($$self, $$props, $$invalidate) {
       const new_length = transitives.push({
         name: "",
         chain: [],
-        rounds: 1,
+        // NOTE: Max by default, users can lower if needed
+        // It seems to fit with intuition that the implied relations just keep going
+        rounds: 10,
         close_reversed: false,
         close_field: settings.edge_fields[0].label
       });
@@ -36722,6 +36743,15 @@ function create_if_block13(ctx) {
   let hr;
   let t5;
   let p2;
+  let t9;
+  let p3;
+  let t10;
+  let code;
+  let t11_value = (
+    /*plugin*/
+    ctx[0].manifest.version + ""
+  );
+  let t11;
   let current;
   rendermarkdown = new RenderMarkdown_default({
     props: {
@@ -36750,6 +36780,11 @@ function create_if_block13(ctx) {
       t5 = space();
       p2 = element("p");
       p2.innerHTML = `See the <a target="_blank" class="external-link" href="https://publish.obsidian.md/breadcrumbs-docs/Views/Codeblocks">codeblock docs</a> for more info`;
+      t9 = space();
+      p3 = element("p");
+      t10 = text("Version: ");
+      code = element("code");
+      t11 = text(t11_value);
       attr(p0, "class", "text-warning text-lg font-semibold");
       attr(div, "class", "BC-codeblock-errors");
     },
@@ -36764,6 +36799,11 @@ function create_if_block13(ctx) {
       insert(target, hr, anchor);
       insert(target, t5, anchor);
       insert(target, p2, anchor);
+      insert(target, t9, anchor);
+      insert(target, p3, anchor);
+      append(p3, t10);
+      append(p3, code);
+      append(code, t11);
       current = true;
     },
     p(ctx2, dirty) {
@@ -36773,6 +36813,10 @@ function create_if_block13(ctx) {
         rendermarkdown_changes.plugin = /*plugin*/
         ctx2[0];
       rendermarkdown.$set(rendermarkdown_changes);
+      if ((!current || dirty & /*plugin*/
+      1) && t11_value !== (t11_value = /*plugin*/
+      ctx2[0].manifest.version + ""))
+        set_data(t11, t11_value);
     },
     i(local) {
       if (current)
@@ -36795,6 +36839,8 @@ function create_if_block13(ctx) {
         detach(hr);
         detach(t5);
         detach(p2);
+        detach(t9);
+        detach(p3);
       }
       destroy_component(rendermarkdown);
     }
@@ -37503,6 +37549,7 @@ function instance49($$self, $$props, $$invalidate) {
           click: { method: "class" },
           active_node_id: source_path,
           renderer: options["mermaid-renderer"],
+          curve_style: options["mermaid-curve"],
           direction: options["mermaid-direction"],
           show_attributes: options["show-attributes"],
           get_node_label: (node_id, _attr) => {
@@ -38982,7 +39029,7 @@ var migrate_old_settings = (settings) => {
                   return;
                 settings.implied_relations.transitive.push({
                   rounds,
-                  name: `Opposite Direction: ${field}/${close_field}`,
+                  name: "",
                   close_field,
                   chain: [{ field }],
                   close_reversed: true
@@ -38996,7 +39043,7 @@ var migrate_old_settings = (settings) => {
               }
               settings.implied_relations.transitive.push({
                 rounds,
-                name: rel + ` (hierarchy ${hier_i + 1})`,
+                name: "",
                 chain: [
                   { field: fields.up },
                   { field: fields.same },
@@ -39013,7 +39060,7 @@ var migrate_old_settings = (settings) => {
               }
               settings.implied_relations.transitive.push({
                 rounds,
-                name: rel + ` (hierarchy ${hier_i + 1})`,
+                name: "",
                 chain: [
                   { field: fields.up },
                   { field: fields.down }
@@ -39028,7 +39075,7 @@ var migrate_old_settings = (settings) => {
                 return;
               settings.implied_relations.transitive.push({
                 rounds,
-                name: rel + ` (hierarchy ${hier_i + 1})`,
+                name: "",
                 chain: [
                   { field: fields.same },
                   { field: fields.same }
@@ -39043,7 +39090,7 @@ var migrate_old_settings = (settings) => {
                 return;
               settings.implied_relations.transitive.push({
                 rounds,
-                name: rel + ` (hierarchy ${hier_i + 1})`,
+                name: "",
                 chain: [
                   { field: fields.same },
                   { field: fields.up }
@@ -39058,7 +39105,7 @@ var migrate_old_settings = (settings) => {
                 return;
               settings.implied_relations.transitive.push({
                 rounds,
-                name: rel + ` (hierarchy ${hier_i + 1})`,
+                name: "",
                 chain: [
                   { field: fields.up },
                   { field: fields.same }
@@ -40046,7 +40093,9 @@ var BreadcrumbsPlugin = class extends import_obsidian35.Plugin {
     var _a, _b;
     await this.loadSettings();
     log.set_level(this.settings.debug.level);
-    log.info("loading Breadcrumbs plugin");
+    log.info(
+      `loading plugin "${this.manifest.name}" plugin v${this.manifest.version}`
+    );
     log.debug("settings >", this.settings);
     this.settings = migrate_old_settings(this.settings);
     await this.saveSettings();

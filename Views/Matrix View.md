@@ -8,6 +8,7 @@ On the right side of each link, you'll see an `x` or `i`, indicating if that edg
 
 Change under `Settings > Views > Matrix`:
 
+- **Collapse**: Collapse each group of fields by default
 - **Sort**: Change the [[Reference#Edge Sorters|edge sorter]] used
 - **Show Attributes**: Choose which [[Reference#Edge Attributes|edge attributes]] show (when hovering the `x`/`i` icon)
 - **Field Groups**: Choose which [[Field Groups|field groups]] are shown

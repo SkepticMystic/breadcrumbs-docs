@@ -1753,8 +1753,8 @@ var require_lib = __commonJS({
       if (s3 == null) {
         return [null, null];
       }
-      for (const [regex, extractor] of patterns) {
-        const m = regex.exec(s3);
+      for (const [regex2, extractor] of patterns) {
+        const m = regex2.exec(s3);
         if (m) {
           return extractor(m);
         }
@@ -3592,8 +3592,8 @@ var require_lib = __commonJS({
       return new RegExp(`${numberingSystems2[numberingSystem || "latn"]}${append2}`);
     }
     var MISSING_FTP2 = "missing Intl.DateTimeFormat.formatToParts support";
-    function intUnit2(regex, post = (i) => i) {
-      return { regex, deser: ([s3]) => post(parseDigits2(s3)) };
+    function intUnit2(regex2, post = (i) => i) {
+      return { regex: regex2, deser: ([s3]) => post(parseDigits2(s3)) };
     }
     var NBSP2 = String.fromCharCode(160);
     var spaceOrNBSP2 = `[ ${NBSP2}]`;
@@ -3614,11 +3614,11 @@ var require_lib = __commonJS({
         };
       }
     }
-    function offset2(regex, groups) {
-      return { regex, deser: ([, h, m]) => signedOffset2(h, m), groups };
+    function offset2(regex2, groups) {
+      return { regex: regex2, deser: ([, h, m]) => signedOffset2(h, m), groups };
     }
-    function simple2(regex) {
-      return { regex, deser: ([s3]) => s3 };
+    function simple2(regex2) {
+      return { regex: regex2, deser: ([s3]) => s3 };
     }
     function escapeToken2(value) {
       return value.replace(/[\-\[\]{}()*+?.,\\\^$|#\s]/g, "\\$&");
@@ -3819,8 +3819,8 @@ var require_lib = __commonJS({
       const re = units.map((u) => u.regex).reduce((f, r) => `${f}(${r.source})`, "");
       return [`^${re}$`, units];
     }
-    function match2(input, regex, handlers) {
-      const matches = input.match(regex);
+    function match2(input, regex2, handlers) {
+      const matches = input.match(regex2);
       if (matches) {
         const all = {};
         let matchIndex = 1;
@@ -3934,13 +3934,13 @@ var require_lib = __commonJS({
       if (disqualifyingUnit) {
         return { input, tokens, invalidReason: disqualifyingUnit.invalidReason };
       } else {
-        const [regexString, handlers] = buildRegex2(units), regex = RegExp(regexString, "i"), [rawMatches, matches] = match2(input, regex, handlers), [result, zone, specificOffset] = matches ? dateTimeFromMatches2(matches) : [null, null, void 0];
+        const [regexString, handlers] = buildRegex2(units), regex2 = RegExp(regexString, "i"), [rawMatches, matches] = match2(input, regex2, handlers), [result, zone, specificOffset] = matches ? dateTimeFromMatches2(matches) : [null, null, void 0];
         if (hasOwnProperty2(matches, "a") && hasOwnProperty2(matches, "H")) {
           throw new ConflictingSpecificationError2(
             "Can't include meridiem when specifying 24-hour format"
           );
         }
-        return { input, tokens, regex, rawMatches, matches, result, zone, specificOffset };
+        return { input, tokens, regex: regex2, rawMatches, matches, result, zone, specificOffset };
       }
     }
     function parseFromTokens2(locale, input, format) {
@@ -9825,6 +9825,12 @@ var remove_nullish_keys = (obj) => Object.fromEntries(
 );
 
 // src/utils/strings.ts
+var split_and_trim = (str, delimiter = ",") => {
+  if (!str || str === "")
+    return [];
+  else
+    return str.split(delimiter).map((str2) => str2.trim());
+};
 var quote_join = (arr, quote = '"', joiner = ", ") => arr.map((str) => quote + str + quote).join(joiner);
 var ensure_starts_with = (str, prefix) => str.startsWith(prefix) ? str : prefix + str;
 var ensure_ends_with = (str, suffix) => str.endsWith(suffix) ? str : str + suffix;
@@ -10675,25 +10681,25 @@ var base64Regex = /^([0-9a-zA-Z+/]{4})*(([0-9a-zA-Z+/]{2}==)|([0-9a-zA-Z+/]{3}=)
 var dateRegexSource = `((\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-((0[13578]|1[02])-(0[1-9]|[12]\\d|3[01])|(0[469]|11)-(0[1-9]|[12]\\d|30)|(02)-(0[1-9]|1\\d|2[0-8])))`;
 var dateRegex = new RegExp(`^${dateRegexSource}$`);
 function timeRegexSource(args) {
-  let regex = `([01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d`;
+  let regex2 = `([01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d`;
   if (args.precision) {
-    regex = `${regex}\\.\\d{${args.precision}}`;
+    regex2 = `${regex2}\\.\\d{${args.precision}}`;
   } else if (args.precision == null) {
-    regex = `${regex}(\\.\\d+)?`;
+    regex2 = `${regex2}(\\.\\d+)?`;
   }
-  return regex;
+  return regex2;
 }
 function timeRegex(args) {
   return new RegExp(`^${timeRegexSource(args)}$`);
 }
 function datetimeRegex(args) {
-  let regex = `${dateRegexSource}T${timeRegexSource(args)}`;
+  let regex2 = `${dateRegexSource}T${timeRegexSource(args)}`;
   const opts = [];
   opts.push(args.local ? `Z?` : `Z`);
   if (args.offset)
     opts.push(`([+-]\\d{2}:?\\d{2})`);
-  regex = `${regex}(${opts.join("|")})`;
-  return new RegExp(`^${regex}$`);
+  regex2 = `${regex2}(${opts.join("|")})`;
+  return new RegExp(`^${regex2}$`);
 }
 function isValidIP(ip, version) {
   if ((version === "v4" || !version) && ipv4Regex.test(ip)) {
@@ -10908,8 +10914,8 @@ var ZodString = class _ZodString extends ZodType {
           status.dirty();
         }
       } else if (check.kind === "datetime") {
-        const regex = datetimeRegex(check);
-        if (!regex.test(input.data)) {
+        const regex2 = datetimeRegex(check);
+        if (!regex2.test(input.data)) {
           ctx = this._getOrReturnCtx(input, ctx);
           addIssueToContext(ctx, {
             code: ZodIssueCode.invalid_string,
@@ -10919,8 +10925,8 @@ var ZodString = class _ZodString extends ZodType {
           status.dirty();
         }
       } else if (check.kind === "date") {
-        const regex = dateRegex;
-        if (!regex.test(input.data)) {
+        const regex2 = dateRegex;
+        if (!regex2.test(input.data)) {
           ctx = this._getOrReturnCtx(input, ctx);
           addIssueToContext(ctx, {
             code: ZodIssueCode.invalid_string,
@@ -10930,8 +10936,8 @@ var ZodString = class _ZodString extends ZodType {
           status.dirty();
         }
       } else if (check.kind === "time") {
-        const regex = timeRegex(check);
-        if (!regex.test(input.data)) {
+        const regex2 = timeRegex(check);
+        if (!regex2.test(input.data)) {
           ctx = this._getOrReturnCtx(input, ctx);
           addIssueToContext(ctx, {
             code: ZodIssueCode.invalid_string,
@@ -10976,8 +10982,8 @@ var ZodString = class _ZodString extends ZodType {
     }
     return { status: status.value, value: input.data };
   }
-  _regex(regex, validation, message) {
-    return this.refinement((data) => regex.test(data), {
+  _regex(regex2, validation, message) {
+    return this.refinement((data) => regex2.test(data), {
       validation,
       code: ZodIssueCode.invalid_string,
       ...errorUtil.errToObj(message)
@@ -11058,10 +11064,10 @@ var ZodString = class _ZodString extends ZodType {
   duration(message) {
     return this._addCheck({ kind: "duration", ...errorUtil.errToObj(message) });
   }
-  regex(regex, message) {
+  regex(regex2, message) {
     return this._addCheck({
       kind: "regex",
-      regex,
+      regex: regex2,
       ...errorUtil.errToObj(message)
     });
   }
@@ -14271,6 +14277,46 @@ var Mermaid = {
   CURVE_STYLES: MERMAID_CURVE_STYLES
 };
 
+// src/utils/zod.ts
+var not_string_msg = (field, received) => `Expected a string (text), but got: \`${received}\` (${typeof received}). _Try wrapping the value in quotes._
+**Example**: \`${field}: "${received}"\``;
+var invalid_enum_msg = (field, options, received) => `Expected one of the following options: ${quote_join(options, "`", ", or ")}, but got: \`${received}\`.
+**Example**: \`${field}: ${options[0]}\``;
+var not_array_msg = (field, options, received) => `This field is now expected to be a YAML list (array), but got: \`${received}\` (${typeof received}). _Try wrapping it in square brackets._
+**Example**: \`${field}: [${options.slice(0, 2).join(", ")}]\`, or possibly: \`${field}: [${received}]\``;
+var dynamic_enum_schema = (options, field) => z.string().superRefine((received, ctx) => {
+  if (options.includes(received)) {
+    return true;
+  } else {
+    ctx.addIssue({
+      options,
+      received,
+      code: "invalid_enum_value",
+      // NOTE: Leave the default path on _this_ object, but pass the override into the error message
+      message: invalid_enum_msg(
+        field != null ? field : ctx.path.join("."),
+        options,
+        received
+      )
+    });
+    return false;
+  }
+});
+var dynamic_enum_array_schema = (field, options, received) => z.array(dynamic_enum_schema(options), {
+  invalid_type_error: not_array_msg(field, options, received)
+});
+var zod = {
+  error: {
+    not_string: not_string_msg,
+    invalid_enum: invalid_enum_msg,
+    not_array: not_array_msg
+  },
+  schema: {
+    dynamic_enum: dynamic_enum_schema,
+    dynamic_enum_array: dynamic_enum_array_schema
+  }
+};
+
 // src/codeblocks/schema.ts
 var FIELDS = [
   "type",
@@ -14291,127 +14337,92 @@ var FIELDS = [
   "mermaid-renderer",
   "mermaid-curve"
 ];
-var zod_not_string_msg = (field, received) => `Expected a string (text), but got: \`${received}\` (${typeof received}). _Try wrapping the value in quotes._
-**Example**: \`${field}: "${received}"\``;
-var zod_invalid_enum_msg = (field, options, received) => `Expected one of the following options: ${quote_join(options, "`", ", or ")}, but got: \`${received}\`.
-**Example**: \`${field}: ${options[0]}\``;
-var zod_not_array_msg = (field, options, received) => `This field is now expected to be a YAML list (array), but got: \`${received}\` (${typeof received}). _Try wrapping it in square brackets._
-**Example**: \`${field}: [${options.slice(0, 2).join(", ")}]\`, or possibly: \`${field}: [${received}]\``;
-var dynamic_enum_schema = (options, path) => z.string().superRefine((received, ctx) => {
-  if (options.includes(received)) {
-    return true;
-  } else {
-    ctx.addIssue({
-      options,
-      received,
-      code: "invalid_enum_value",
-      // NOTE: Leave the default path on _this_ object, but pass the override into the error message
-      message: zod_invalid_enum_msg(
-        path != null ? path : ctx.path.join("."),
-        options,
-        received
-      )
-    });
-    return false;
-  }
-});
 var BOOLEANS = [true, false];
-var dynamic_enum_array_schema = (field, options, received) => z.array(dynamic_enum_schema(options), {
-  invalid_type_error: zod_not_array_msg(field, options, received)
-});
 var build2 = (input, data) => {
   var _a, _b, _c, _d, _e, _f, _g, _h;
   const field_labels = data.edge_fields.map((f) => f.label);
   const group_labels = data.field_groups.map((f) => f.label);
   return z.object({
     title: z.string({
-      message: zod_not_string_msg(
-        //
-        "title",
-        input["title"]
-      )
+      message: zod.error.not_string("title", input["title"])
     }).optional(),
     "start-note": z.string({
-      message: zod_not_string_msg(
+      message: zod.error.not_string(
         "start-note",
         input["start-note"]
       )
     }).optional(),
     "dataview-from": z.string({
-      message: zod_not_string_msg(
+      message: zod.error.not_string(
         "dataview-from",
         input["dataview-from"]
       )
     }).optional(),
     flat: z.boolean({
-      message: zod_invalid_enum_msg(
+      message: zod.error.invalid_enum(
         "flat",
         BOOLEANS,
         input["flat"]
       )
     }).default(false),
     collapse: z.boolean({
-      message: zod_invalid_enum_msg(
+      message: zod.error.invalid_enum(
         "collapse",
         BOOLEANS,
         input["collapse"]
       )
     }).default(false),
     "merge-fields": z.boolean({
-      message: zod_invalid_enum_msg(
+      message: zod.error.invalid_enum(
         "merge-fields",
         BOOLEANS,
         input["merge-fields"]
       )
     }).default(true),
     content: z.enum(["open", "closed"], {
-      message: zod_invalid_enum_msg(
+      message: zod.error.invalid_enum(
         "content",
         ["open", "closed"],
         input["content"]
       )
     }).optional(),
     type: z.enum(["tree", "mermaid"], {
-      message: zod_invalid_enum_msg(
+      message: zod.error.invalid_enum(
         "type",
         ["tree", "mermaid"],
         input["type"]
       )
     }).default("tree"),
     "mermaid-renderer": z.enum(Mermaid.RENDERERS, {
-      message: zod_invalid_enum_msg(
+      message: zod.error.invalid_enum(
         "mermaid-renderer",
         Mermaid.RENDERERS,
         input["mermaid-renderer"]
       )
     }).optional(),
     "mermaid-direction": z.enum(Mermaid.DIRECTIONS, {
-      message: zod_invalid_enum_msg(
+      message: zod.error.invalid_enum(
         "mermaid-direction",
         Mermaid.DIRECTIONS,
         input["mermaid-direction"]
       )
     }).optional(),
     "mermaid-curve": z.enum(Mermaid.CURVE_STYLES, {
-      message: zod_invalid_enum_msg(
+      message: zod.error.invalid_enum(
         "mermaid-curve",
         Mermaid.CURVE_STYLES,
         input["mermaid-curve"]
       )
     }).optional(),
     "show-attributes": z.array(z.enum(EDGE_ATTRIBUTES), {
-      message: zod_not_array_msg(
+      message: zod.error.not_array(
         "show-attributes",
         EDGE_ATTRIBUTES,
         input["show-attributes"]
       )
     }).optional(),
-    fields: dynamic_enum_array_schema(
-      "fields",
-      field_labels,
-      input["fields"]
-    ).optional(),
-    "field-groups": dynamic_enum_array_schema(
+    fields: zod.schema.dynamic_enum_array("fields", field_labels, input["fields"]).optional(),
+    "field-groups": zod.schema.dynamic_enum_array(
       "field-groups",
       group_labels,
       input["field-groups"]
@@ -14461,7 +14472,7 @@ var build2 = (input, data) => {
       z.object({
         // TODO: Use a custom zod schema to retain string template literals here
         // https://github.com/colinhacks/zod?tab=readme-ov-file#custom-schemas
-        field: dynamic_enum_schema(
+        field: zod.schema.dynamic_enum(
           [
             ...SIMPLE_EDGE_SORT_FIELDS,
             ...data.edge_fields.map(
@@ -14483,7 +14494,7 @@ var build2 = (input, data) => {
           {
             // SOURCE: https://github.com/colinhacks/zod/issues/117#issuecomment-1595801389
             errorMap: (_err, ctx) => ({
-              message: zod_invalid_enum_msg(
+              message: zod.error.invalid_enum(
                 "sort.order",
                 ["asc", "desc"],
                 ctx.data
@@ -14528,12 +14539,7 @@ var build2 = (input, data) => {
 };
 var CodeblockSchema = {
   FIELDS,
-  build: build2,
-  error: {
-    zod_not_array_msg,
-    zod_not_string_msg,
-    zod_invalid_enum_msg
-  }
+  build: build2
 };
 
 // src/codeblocks/index.ts
@@ -17195,8 +17201,8 @@ function parse(s2, ...patterns) {
   if (s2 == null) {
     return [null, null];
   }
-  for (const [regex, extractor] of patterns) {
-    const m = regex.exec(s2);
+  for (const [regex2, extractor] of patterns) {
+    const m = regex2.exec(s2);
     if (m) {
       return extractor(m);
     }
@@ -19110,8 +19116,8 @@ function digitRegex({ numberingSystem }, append2 = "") {
 
 // node_modules/luxon/src/impl/tokenParser.js
 var MISSING_FTP = "missing Intl.DateTimeFormat.formatToParts support";
-function intUnit(regex, post = (i) => i) {
-  return { regex, deser: ([s2]) => post(parseDigits(s2)) };
+function intUnit(regex2, post = (i) => i) {
+  return { regex: regex2, deser: ([s2]) => post(parseDigits(s2)) };
 }
 var NBSP = String.fromCharCode(160);
 var spaceOrNBSP = `[ ${NBSP}]`;
@@ -19132,11 +19138,11 @@ function oneOf(strings, startIndex) {
     };
   }
 }
-function offset(regex, groups) {
-  return { regex, deser: ([, h, m]) => signedOffset(h, m), groups };
+function offset(regex2, groups) {
+  return { regex: regex2, deser: ([, h, m]) => signedOffset(h, m), groups };
 }
-function simple(regex) {
-  return { regex, deser: ([s2]) => s2 };
+function simple(regex2) {
+  return { regex: regex2, deser: ([s2]) => s2 };
 }
 function escapeToken(value) {
   return value.replace(/[\-\[\]{}()*+?.,\\\^$|#\s]/g, "\\$&");
@@ -19337,8 +19343,8 @@ function buildRegex(units) {
   const re = units.map((u) => u.regex).reduce((f, r) => `${f}(${r.source})`, "");
   return [`^${re}$`, units];
 }
-function match(input, regex, handlers) {
-  const matches = input.match(regex);
+function match(input, regex2, handlers) {
+  const matches = input.match(regex2);
   if (matches) {
     const all = {};
     let matchIndex = 1;
@@ -19452,13 +19458,13 @@ function explainFromTokens(locale, input, format) {
   if (disqualifyingUnit) {
     return { input, tokens, invalidReason: disqualifyingUnit.invalidReason };
   } else {
-    const [regexString, handlers] = buildRegex(units), regex = RegExp(regexString, "i"), [rawMatches, matches] = match(input, regex, handlers), [result, zone, specificOffset] = matches ? dateTimeFromMatches(matches) : [null, null, void 0];
+    const [regexString, handlers] = buildRegex(units), regex2 = RegExp(regexString, "i"), [rawMatches, matches] = match(input, regex2, handlers), [result, zone, specificOffset] = matches ? dateTimeFromMatches(matches) : [null, null, void 0];
     if (hasOwnProperty(matches, "a") && hasOwnProperty(matches, "H")) {
       throw new ConflictingSpecificationError(
         "Can't include meridiem when specifying 24-hour format"
       );
     }
-    return { input, tokens, regex, rawMatches, matches, result, zone, specificOffset };
+    return { input, tokens, regex: regex2, rawMatches, matches, result, zone, specificOffset };
   }
 }
 function parseFromTokens(locale, input, format) {
@@ -21776,12 +21782,12 @@ var _add_explicit_edges_johnny_decimal_note = (graph, plugin, all_files) => {
     return { errors };
   }
   const { delimiter } = plugin.settings.explicit_edge_sources.johnny_decimal_note;
-  const regex = new RegExp(`^([\\w\\d\\${delimiter}]+)(\\s|\\${delimiter}$)`);
+  const regex2 = new RegExp(`^([\\w\\d\\${delimiter}]+)(\\s|\\${delimiter}$)`);
   const johnny_decimal_notes = [];
   (_a = all_files.obsidian) == null ? void 0 : _a.forEach(({ file, cache }) => {
     var _a2;
     const basename2 = Paths.basename(file.path);
-    const decimals = (_a2 = basename2.match(regex)) == null ? void 0 : _a2[1];
+    const decimals = (_a2 = basename2.match(regex2)) == null ? void 0 : _a2[1];
     if (!decimals)
       return;
     johnny_decimal_notes.push({
@@ -21794,7 +21800,7 @@ var _add_explicit_edges_johnny_decimal_note = (graph, plugin, all_files) => {
   (_b = all_files.dataview) == null ? void 0 : _b.forEach((page) => {
     var _a2;
     const basename2 = Paths.basename(page.file.path);
-    const decimals = (_a2 = basename2.match(regex)) == null ? void 0 : _a2[1];
+    const decimals = (_a2 = basename2.match(regex2)) == null ? void 0 : _a2[1];
     if (!decimals)
       return;
     johnny_decimal_notes.push({
@@ -22086,10 +22092,10 @@ var get_regex_note_info = (plugin, metadata, path) => {
       message: `regex-note-flags is not a string: '${flags}'`
     });
   }
-  let regex;
+  let regex2;
   try {
-    regex = new RegExp(regex_str, flags || "");
-    log.debug(`get_regex_note_info > regex:`, regex);
+    regex2 = new RegExp(regex_str, flags || "");
+    log.debug(`get_regex_note_info > regex:`, regex2);
   } catch (e) {
     return graph_build_fail({
       path,
@@ -22115,7 +22121,7 @@ var get_regex_note_info = (plugin, metadata, path) => {
   }
   return succ({
     field,
-    regex
+    regex: regex2
   });
 };
 var _add_explicit_edges_regex_note = (graph, plugin, all_files) => {
@@ -22392,8 +22398,31 @@ var get_all_files = (app) => {
 };
 
 // src/utils/transitive_rules.ts
-var stringify_transitive_relation = (rule) => `[${rule.chain.map((attr2) => url_search_params(attr2, { trim_lone_param: true })).join(", ")}] ${rule.close_reversed ? "\u2190" : "\u2192"} ${rule.close_field}`;
+var stringify_transitive_relation = (rule) => `[${rule.chain.map((attr2) => url_search_params(attr2, { trim_lone_param: true })).join(", ")}] ${rule.close_reversed ? "<-" : "->"} ${rule.close_field}`;
+var regex = /\[(.+)\]\s*(<-|->)\s*(.+)/;
 var get_transitive_rule_name = (rule) => rule.name || stringify_transitive_relation(rule);
+var parse_transitive_relation = (str) => {
+  const match2 = str.match(regex);
+  if (!match2) {
+    return fail(null);
+  } else {
+    return succ({
+      close_field: match2[3],
+      close_reversed: match2[2] === "<-",
+      chain: split_and_trim(match2[1]).map((field) => ({ field }))
+    });
+  }
+};
+var input_transitive_rule_schema = (data) => {
+  const field_labels = data.fields.map((f) => f.label);
+  return z.object({
+    chain: z.array(
+      z.object({ field: zod.schema.dynamic_enum(field_labels) })
+    ),
+    close_field: zod.schema.dynamic_enum(field_labels, "close_field"),
+    close_reversed: z.boolean()
+  });
+};
 var transitive_rule_to_edges = (rule) => {
   const edges = [];
   rule.chain.forEach((attr2, i) => {
@@ -27160,46 +27189,46 @@ var tag_default = Tag;
 // src/components/settings/EdgeFieldSettings.svelte
 function get_each_context2(ctx, list, i) {
   const child_ctx = ctx.slice();
-  child_ctx[18] = list[i];
+  child_ctx[22] = list[i];
   return child_ctx;
 }
 function get_each_context_1(ctx, list, i) {
   const child_ctx = ctx.slice();
-  child_ctx[21] = list[i];
+  child_ctx[25] = list[i];
   return child_ctx;
 }
 function get_each_context_2(ctx, list, i) {
   const child_ctx = ctx.slice();
-  child_ctx[24] = list[i];
+  child_ctx[28] = list[i];
   return child_ctx;
 }
 function get_each_context_3(ctx, list, i) {
   const child_ctx = ctx.slice();
-  child_ctx[27] = list[i];
+  child_ctx[31] = list[i];
   const constants_0 = (
     /*settings*/
     child_ctx[0].edge_field_groups.filter(function func_1(...args) {
       return (
         /*func_1*/
-        ctx[11](
+        ctx[13](
           /*field*/
-          child_ctx[27],
+          child_ctx[31],
           ...args
         )
       );
     }).map((g) => g.label)
   );
-  child_ctx[28] = constants_0;
+  child_ctx[32] = constants_0;
   return child_ctx;
 }
 function get_each_context_4(ctx, list, i) {
   const child_ctx = ctx.slice();
-  child_ctx[18] = list[i];
+  child_ctx[22] = list[i];
   return child_ctx;
 }
 function get_each_context_5(ctx, list, i) {
   const child_ctx = ctx.slice();
-  child_ctx[33] = list[i];
+  child_ctx[37] = list[i];
   return child_ctx;
 }
 function create_if_block_6(ctx) {
@@ -27222,42 +27251,33 @@ function create_if_block_6(ctx) {
 }
 function create_if_block_5(ctx) {
   let button;
-  let a;
   let arrowdown;
-  let a_href_value;
   let current;
+  let mounted;
+  let dispose;
   arrowdown = new arrow_down_default({ props: { size: ICON_SIZE } });
   return {
     c() {
-      var _a, _b;
       button = element("button");
-      a = element("a");
       create_component(arrowdown.$$.fragment);
-      attr(a, "href", a_href_value = "#" + /*actions*/
-      ctx[2].fields.make_id(
-        /*settings*/
-        (_b = (_a = ctx[0].edge_fields.last()) == null ? void 0 : _a.label) != null ? _b : ""
-      ));
-      attr(button, "class", "w-8");
+      attr(button, "class", "w-10");
       attr(button, "aria-label", "Jump to bottom");
     },
     m(target, anchor) {
       insert(target, button, anchor);
-      append(button, a);
-      mount_component(arrowdown, a, null);
+      mount_component(arrowdown, button, null);
       current = true;
-    },
-    p(ctx2, dirty) {
-      var _a, _b;
-      if (!current || dirty[0] & /*settings*/
-      1 && a_href_value !== (a_href_value = "#" + /*actions*/
-      ctx2[2].fields.make_id(
-        /*settings*/
-        (_b = (_a = ctx2[0].edge_fields.last()) == null ? void 0 : _a.label) != null ? _b : ""
-      ))) {
-        attr(a, "href", a_href_value);
+      if (!mounted) {
+        dispose = listen(
+          button,
+          "click",
+          /*click_handler_1*/
+          ctx[7]
+        );
+        mounted = true;
       }
     },
+    p: noop,
     i(local) {
       if (current)
         return;
@@ -27273,6 +27293,8 @@ function create_if_block_5(ctx) {
         detach(button);
       }
       destroy_component(arrowdown);
+      mounted = false;
+      dispose();
     }
   };
 }
@@ -27280,35 +27302,40 @@ function create_each_block_5(ctx) {
   let div;
   let tag;
   let current;
+  function click_handler_3() {
+    return (
+      /*click_handler_3*/
+      ctx[11](
+        /*group_label*/
+        ctx[37]
+      )
+    );
+  }
   tag = new tag_default({
     props: {
       tag: (
         /*group_label*/
-        ctx[33]
-      ),
-      href: "#" + /*actions*/
-      ctx[2].groups.make_id(
-        /*group_label*/
-        ctx[33]
+        ctx[37]
       ),
       title: "Jump to group. Right click for more actions."
     }
   });
+  tag.$on("click", click_handler_3);
   tag.$on("contextmenu", function() {
     if (is_function(
       /*context_menus*/
       ctx[3].field_group(
         /*field*/
-        ctx[27],
+        ctx[31],
         /*group_label*/
-        ctx[33]
+        ctx[37]
       )
     ))
       ctx[3].field_group(
         /*field*/
-        ctx[27],
+        ctx[31],
         /*group_label*/
-        ctx[33]
+        ctx[37]
       ).apply(this, arguments);
   });
   return {
@@ -27328,14 +27355,7 @@ function create_each_block_5(ctx) {
       if (dirty[0] & /*settings, filters*/
       3)
         tag_changes.tag = /*group_label*/
-        ctx[33];
-      if (dirty[0] & /*settings, filters*/
-      3)
-        tag_changes.href = "#" + /*actions*/
-        ctx[2].groups.make_id(
-          /*group_label*/
-          ctx[33]
-        );
+        ctx[37];
       tag.$set(tag_changes);
     },
     i(local) {
@@ -27378,7 +27398,7 @@ function create_if_block_3(ctx) {
   let option;
   let t_value = (
     /*group*/
-    ctx[18].label + ""
+    ctx[22].label + ""
   );
   let t;
   let option_value_value;
@@ -27387,7 +27407,7 @@ function create_if_block_3(ctx) {
       option = element("option");
       t = text(t_value);
       option.__value = option_value_value = /*group*/
-      ctx[18].label;
+      ctx[22].label;
       set_input_value(option, option.__value);
     },
     m(target, anchor) {
@@ -27397,11 +27417,11 @@ function create_if_block_3(ctx) {
     p(ctx2, dirty) {
       if (dirty[0] & /*settings*/
       1 && t_value !== (t_value = /*group*/
-      ctx2[18].label + ""))
+      ctx2[22].label + ""))
         set_data(t, t_value);
       if (dirty[0] & /*settings*/
       1 && option_value_value !== (option_value_value = /*group*/
-      ctx2[18].label)) {
+      ctx2[22].label)) {
         option.__value = option_value_value;
         set_input_value(option, option.__value);
       }
@@ -27415,9 +27435,9 @@ function create_if_block_3(ctx) {
 }
 function create_each_block_4(ctx) {
   let show_if = !/*group*/
-  ctx[18].fields.includes(
+  ctx[22].fields.includes(
     /*field*/
-    ctx[27].label
+    ctx[31].label
   );
   let if_block_anchor;
   let if_block = show_if && create_if_block_3(ctx);
@@ -27436,9 +27456,9 @@ function create_each_block_4(ctx) {
       if (dirty[0] & /*settings, filters*/
       3)
         show_if = !/*group*/
-        ctx2[18].fields.includes(
+        ctx2[22].fields.includes(
           /*field*/
-          ctx2[27].label
+          ctx2[31].label
         );
       if (show_if) {
         if (if_block) {
@@ -27475,7 +27495,7 @@ function create_key_block(ctx) {
   let dispose;
   let each_value_5 = ensure_array_like(
     /*group_labels*/
-    ctx[28]
+    ctx[32]
   );
   let each_blocks_1 = [];
   for (let i = 0; i < each_value_5.length; i += 1) {
@@ -27485,7 +27505,7 @@ function create_key_block(ctx) {
     each_blocks_1[i] = null;
   });
   let if_block = !/*group_labels*/
-  ctx[28].length && create_if_block_4(ctx);
+  ctx[32].length && create_if_block_4(ctx);
   let each_value_4 = ensure_array_like(
     /*settings*/
     ctx[0].edge_field_groups
@@ -27497,9 +27517,9 @@ function create_key_block(ctx) {
   function change_handler(...args) {
     return (
       /*change_handler*/
-      ctx[10](
+      ctx[12](
         /*field*/
-        ctx[27],
+        ctx[31],
         ...args
       )
     );
@@ -27562,7 +27582,7 @@ function create_key_block(ctx) {
       15) {
         each_value_5 = ensure_array_like(
           /*group_labels*/
-          ctx[28]
+          ctx[32]
         );
         let i;
         for (i = 0; i < each_value_5.length; i += 1) {
@@ -27584,7 +27604,7 @@ function create_key_block(ctx) {
         check_outros();
       }
       if (!/*group_labels*/
-      ctx[28].length) {
+      ctx[32].length) {
         if (if_block) {
         } else {
           if_block = create_if_block_4(ctx);
@@ -27665,19 +27685,19 @@ function create_each_block_3(ctx) {
   function blur_handler(...args) {
     return (
       /*blur_handler*/
-      ctx[8](
+      ctx[9](
         /*field*/
-        ctx[27],
+        ctx[31],
         ...args
       )
     );
   }
-  function click_handler_1() {
+  function click_handler_2() {
     return (
-      /*click_handler_1*/
-      ctx[9](
+      /*click_handler_2*/
+      ctx[10](
         /*field*/
-        ctx[27]
+        ctx[31]
       )
     );
   }
@@ -27695,13 +27715,13 @@ function create_each_block_3(ctx) {
       attr(input, "id", input_id_value = /*actions*/
       ctx[2].fields.make_id(
         /*field*/
-        ctx[27].label
+        ctx[31].label
       ));
       attr(input, "type", "text");
       attr(input, "class", "w-48 scroll-mt-40");
       attr(input, "placeholder", "Field Label");
       input.value = input_value_value = /*field*/
-      ctx[27].label;
+      ctx[31].label;
       attr(button, "class", "w-8");
       attr(button, "title", "Remove Field");
       attr(div0, "class", "flex flex-wrap items-center gap-1");
@@ -27719,7 +27739,7 @@ function create_each_block_3(ctx) {
       if (!mounted) {
         dispose = [
           listen(input, "blur", blur_handler),
-          listen(button, "click", click_handler_1)
+          listen(button, "click", click_handler_2)
         ];
         mounted = true;
       }
@@ -27730,13 +27750,13 @@ function create_each_block_3(ctx) {
       3 && input_id_value !== (input_id_value = /*actions*/
       ctx[2].fields.make_id(
         /*field*/
-        ctx[27].label
+        ctx[31].label
       ))) {
         attr(input, "id", input_id_value);
       }
       if (!current || dirty[0] & /*settings, filters*/
       3 && input_value_value !== (input_value_value = /*field*/
-      ctx[27].label) && input.value !== input_value_value) {
+      ctx[31].label) && input.value !== input_value_value) {
         input.value = input_value_value;
       }
       if (dirty[0] & /*settings*/
@@ -27775,42 +27795,33 @@ function create_each_block_3(ctx) {
 }
 function create_if_block_2(ctx) {
   let button;
-  let a;
   let arrowdown;
-  let a_href_value;
   let current;
+  let mounted;
+  let dispose;
   arrowdown = new arrow_down_default({ props: { size: ICON_SIZE } });
   return {
     c() {
-      var _a, _b;
       button = element("button");
-      a = element("a");
       create_component(arrowdown.$$.fragment);
-      attr(a, "href", a_href_value = "#" + /*actions*/
-      ctx[2].groups.make_id(
-        /*settings*/
-        (_b = (_a = ctx[0].edge_field_groups.last()) == null ? void 0 : _a.label) != null ? _b : ""
-      ));
-      attr(button, "class", "w-8");
+      attr(button, "class", "w-10");
       attr(button, "aria-label", "Jump to bottom");
     },
     m(target, anchor) {
       insert(target, button, anchor);
-      append(button, a);
-      mount_component(arrowdown, a, null);
+      mount_component(arrowdown, button, null);
       current = true;
-    },
-    p(ctx2, dirty) {
-      var _a, _b;
-      if (!current || dirty[0] & /*settings*/
-      1 && a_href_value !== (a_href_value = "#" + /*actions*/
-      ctx2[2].groups.make_id(
-        /*settings*/
-        (_b = (_a = ctx2[0].edge_field_groups.last()) == null ? void 0 : _a.label) != null ? _b : ""
-      ))) {
-        attr(a, "href", a_href_value);
+      if (!mounted) {
+        dispose = listen(
+          button,
+          "click",
+          /*click_handler_5*/
+          ctx[16]
+        );
+        mounted = true;
       }
     },
+    p: noop,
     i(local) {
       if (current)
         return;
@@ -27826,6 +27837,8 @@ function create_if_block_2(ctx) {
         detach(button);
       }
       destroy_component(arrowdown);
+      mounted = false;
+      dispose();
     }
   };
 }
@@ -27833,35 +27846,40 @@ function create_each_block_2(ctx) {
   let div;
   let tag;
   let current;
+  function click_handler_7() {
+    return (
+      /*click_handler_7*/
+      ctx[20](
+        /*field_label*/
+        ctx[28]
+      )
+    );
+  }
   tag = new tag_default({
     props: {
       tag: (
         /*field_label*/
-        ctx[24]
-      ),
-      href: "#" + /*actions*/
-      ctx[2].fields.make_id(
-        /*field_label*/
-        ctx[24]
+        ctx[28]
       ),
       title: "Jump to field. Right click for more actions."
     }
   });
+  tag.$on("click", click_handler_7);
   tag.$on("contextmenu", function() {
     if (is_function(
       /*context_menus*/
       ctx[3].group_field(
         /*group*/
-        ctx[18],
+        ctx[22],
         /*field_label*/
-        ctx[24]
+        ctx[28]
       )
     ))
       ctx[3].group_field(
         /*group*/
-        ctx[18],
+        ctx[22],
         /*field_label*/
-        ctx[24]
+        ctx[28]
       ).apply(this, arguments);
   });
   return {
@@ -27881,14 +27899,7 @@ function create_each_block_2(ctx) {
       if (dirty[0] & /*settings, filters*/
       3)
         tag_changes.tag = /*field_label*/
-        ctx[24];
-      if (dirty[0] & /*settings, filters*/
-      3)
-        tag_changes.href = "#" + /*actions*/
-        ctx[2].fields.make_id(
-          /*field_label*/
-          ctx[24]
-        );
+        ctx[28];
       tag.$set(tag_changes);
     },
     i(local) {
@@ -27931,7 +27942,7 @@ function create_if_block2(ctx) {
   let option;
   let t_value = (
     /*edge_field*/
-    ctx[21].label + ""
+    ctx[25].label + ""
   );
   let t;
   let option_value_value;
@@ -27940,7 +27951,7 @@ function create_if_block2(ctx) {
       option = element("option");
       t = text(t_value);
       option.__value = option_value_value = /*edge_field*/
-      ctx[21].label;
+      ctx[25].label;
       set_input_value(option, option.__value);
     },
     m(target, anchor) {
@@ -27950,11 +27961,11 @@ function create_if_block2(ctx) {
     p(ctx2, dirty) {
       if (dirty[0] & /*settings*/
       1 && t_value !== (t_value = /*edge_field*/
-      ctx2[21].label + ""))
+      ctx2[25].label + ""))
         set_data(t, t_value);
       if (dirty[0] & /*settings*/
       1 && option_value_value !== (option_value_value = /*edge_field*/
-      ctx2[21].label)) {
+      ctx2[25].label)) {
         option.__value = option_value_value;
         set_input_value(option, option.__value);
       }
@@ -27968,9 +27979,9 @@ function create_if_block2(ctx) {
 }
 function create_each_block_1(ctx) {
   let show_if = !/*group*/
-  ctx[18].fields.includes(
+  ctx[22].fields.includes(
     /*edge_field*/
-    ctx[21].label
+    ctx[25].label
   );
   let if_block_anchor;
   let if_block = show_if && create_if_block2(ctx);
@@ -27989,9 +28000,9 @@ function create_each_block_1(ctx) {
       if (dirty[0] & /*settings, filters*/
       3)
         show_if = !/*group*/
-        ctx2[18].fields.includes(
+        ctx2[22].fields.includes(
           /*edge_field*/
-          ctx2[21].label
+          ctx2[25].label
         );
       if (show_if) {
         if (if_block) {
@@ -28037,25 +28048,25 @@ function create_each_block2(ctx) {
   function blur_handler_1(...args) {
     return (
       /*blur_handler_1*/
-      ctx[15](
+      ctx[18](
         /*group*/
-        ctx[18],
+        ctx[22],
         ...args
       )
     );
   }
-  function click_handler_3() {
+  function click_handler_6() {
     return (
-      /*click_handler_3*/
-      ctx[16](
+      /*click_handler_6*/
+      ctx[19](
         /*group*/
-        ctx[18]
+        ctx[22]
       )
     );
   }
   let each_value_2 = ensure_array_like(
     /*group*/
-    ctx[18].fields
+    ctx[22].fields
   );
   let each_blocks_1 = [];
   for (let i = 0; i < each_value_2.length; i += 1) {
@@ -28065,7 +28076,7 @@ function create_each_block2(ctx) {
     each_blocks_1[i] = null;
   });
   let if_block = !/*group*/
-  ctx[18].fields.length && create_if_block_1(ctx);
+  ctx[22].fields.length && create_if_block_1(ctx);
   let each_value_1 = ensure_array_like(
     /*settings*/
     ctx[0].edge_fields
@@ -28077,9 +28088,9 @@ function create_each_block2(ctx) {
   function change_handler_1(...args) {
     return (
       /*change_handler_1*/
-      ctx[17](
+      ctx[21](
         /*group*/
-        ctx[18],
+        ctx[22],
         ...args
       )
     );
@@ -28113,13 +28124,13 @@ function create_each_block2(ctx) {
       attr(input, "id", input_id_value = /*actions*/
       ctx[2].groups.make_id(
         /*group*/
-        ctx[18].label
+        ctx[22].label
       ));
       attr(input, "type", "text");
       attr(input, "class", "w-48 scroll-mt-40");
       attr(input, "placeholder", "Group Label");
       input.value = input_value_value = /*group*/
-      ctx[18].label;
+      ctx[22].label;
       attr(button, "class", "w-8");
       attr(button, "title", "Remove Group");
       attr(div0, "class", "flex flex-wrap items-center gap-1");
@@ -28161,7 +28172,7 @@ function create_each_block2(ctx) {
       if (!mounted) {
         dispose = [
           listen(input, "blur", blur_handler_1),
-          listen(button, "click", click_handler_3),
+          listen(button, "click", click_handler_6),
           listen(select, "change", change_handler_1)
         ];
         mounted = true;
@@ -28173,20 +28184,20 @@ function create_each_block2(ctx) {
       3 && input_id_value !== (input_id_value = /*actions*/
       ctx[2].groups.make_id(
         /*group*/
-        ctx[18].label
+        ctx[22].label
       ))) {
         attr(input, "id", input_id_value);
       }
       if (!current || dirty[0] & /*settings, filters*/
       3 && input_value_value !== (input_value_value = /*group*/
-      ctx[18].label) && input.value !== input_value_value) {
+      ctx[22].label) && input.value !== input_value_value) {
         input.value = input_value_value;
       }
       if (dirty[0] & /*settings, filters, actions, context_menus*/
       15) {
         each_value_2 = ensure_array_like(
           /*group*/
-          ctx[18].fields
+          ctx[22].fields
         );
         let i;
         for (i = 0; i < each_value_2.length; i += 1) {
@@ -28208,7 +28219,7 @@ function create_each_block2(ctx) {
         check_outros();
       }
       if (!/*group*/
-      ctx[18].fields.length) {
+      ctx[22].fields.length) {
         if (if_block) {
         } else {
           if_block = create_if_block_1(ctx);
@@ -28329,7 +28340,7 @@ function create_fragment22(ctx) {
     /*settings*/
     ctx[0].edge_fields.filter(
       /*func*/
-      ctx[7]
+      ctx[8]
     )
   );
   let each_blocks_1 = [];
@@ -28348,7 +28359,7 @@ function create_fragment22(ctx) {
     /*settings*/
     ctx[0].edge_field_groups.filter(
       /*func_3*/
-      ctx[14]
+      ctx[17]
     )
   );
   let each_blocks = [];
@@ -28537,13 +28548,13 @@ function create_fragment22(ctx) {
             input1,
             "input",
             /*input1_input_handler*/
-            ctx[12]
+            ctx[14]
           ),
           listen(
             button3,
             "click",
-            /*click_handler_2*/
-            ctx[13]
+            /*click_handler_4*/
+            ctx[15]
           ),
           listen(
             button4,
@@ -28613,7 +28624,7 @@ function create_fragment22(ctx) {
           /*settings*/
           ctx2[0].edge_fields.filter(
             /*func*/
-            ctx2[7]
+            ctx2[8]
           )
         );
         let i;
@@ -28678,7 +28689,7 @@ function create_fragment22(ctx) {
           /*settings*/
           ctx2[0].edge_field_groups.filter(
             /*func_3*/
-            ctx2[14]
+            ctx2[17]
           )
         );
         let i;
@@ -28764,12 +28775,19 @@ function instance22($$self, $$props, $$invalidate) {
     }),
     fields: {
       make_id: (label) => `BC-edge-field-${label}`,
+      scroll_to: (label) => {
+        const el = document.getElementById(actions.fields.make_id(label));
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "center" });
+          el.focus();
+        }
+      },
       add: () => {
         const field = {
           label: `Edge Field ${settings.edge_fields.length + 1}`
         };
         settings.edge_fields.push(field);
-        setTimeout(() => window.location.hash = actions.fields.make_id(field.label), 0);
+        setTimeout(() => actions.fields.scroll_to(field.label), 0);
         $$invalidate(0, settings.is_dirty = true, settings);
         $$invalidate(4, plugin);
       },
@@ -28836,13 +28854,20 @@ function instance22($$self, $$props, $$invalidate) {
     },
     groups: {
       make_id: (label) => `BC-edge-group-${label}`,
+      scroll_to: (label) => {
+        const el = document.getElementById(actions.groups.make_id(label));
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "center" });
+          el.focus();
+        }
+      },
       add: () => {
         const group = {
           label: `Group ${settings.edge_field_groups.length + 1}`,
           fields: []
         };
         settings.edge_field_groups.push(group);
-        setTimeout(() => window.location.hash = actions.groups.make_id(group.label), 0);
+        setTimeout(() => actions.groups.scroll_to(group.label), 0);
         $$invalidate(0, settings.is_dirty = true, settings);
         $$invalidate(4, plugin);
       },
@@ -28896,9 +28921,14 @@ function instance22($$self, $$props, $$invalidate) {
     $$invalidate(1, filters);
   }
   const click_handler = () => $$invalidate(1, filters.fields = "", filters);
+  const click_handler_1 = () => {
+    var _a, _b;
+    return actions.fields.scroll_to((_b = (_a = settings.edge_fields.last()) == null ? void 0 : _a.label) != null ? _b : "");
+  };
   const func = (f) => f.label.includes(filters.fields.toLowerCase());
   const blur_handler = (field, e) => actions.fields.rename(field, e.currentTarget.value);
-  const click_handler_1 = (field) => actions.fields.remove(field);
+  const click_handler_2 = (field) => actions.fields.remove(field);
+  const click_handler_3 = (group_label) => actions.groups.scroll_to(group_label);
   const change_handler = (field, e) => {
     if (e.currentTarget.value) {
       actions.groups.add_field(settings.edge_field_groups.find((g) => g.label === e.currentTarget.value), field.label);
@@ -28910,10 +28940,15 @@ function instance22($$self, $$props, $$invalidate) {
     filters.groups = this.value;
     $$invalidate(1, filters);
   }
-  const click_handler_2 = () => $$invalidate(1, filters.groups = "", filters);
+  const click_handler_4 = () => $$invalidate(1, filters.groups = "", filters);
+  const click_handler_5 = () => {
+    var _a, _b;
+    return actions.groups.scroll_to((_b = (_a = settings.edge_field_groups.last()) == null ? void 0 : _a.label) != null ? _b : "");
+  };
   const func_3 = (group) => group.label.includes(filters.groups.toLowerCase());
   const blur_handler_1 = (group, e) => actions.groups.rename(group, e.currentTarget.value);
-  const click_handler_3 = (group) => actions.groups.remove(group);
+  const click_handler_6 = (group) => actions.groups.remove(group);
+  const click_handler_7 = (field_label) => actions.fields.scroll_to(field_label);
   const change_handler_1 = (group, e) => {
     if (e.currentTarget.value) {
       actions.groups.add_field(group, e.currentTarget.value);
@@ -28932,16 +28967,20 @@ function instance22($$self, $$props, $$invalidate) {
     plugin,
     input0_input_handler,
     click_handler,
+    click_handler_1,
     func,
     blur_handler,
-    click_handler_1,
+    click_handler_2,
+    click_handler_3,
     change_handler,
     func_1,
     input1_input_handler,
-    click_handler_2,
+    click_handler_4,
+    click_handler_5,
     func_3,
     blur_handler_1,
-    click_handler_3,
+    click_handler_6,
+    click_handler_7,
     change_handler_1
   ];
 }
@@ -29521,55 +29560,48 @@ function add_css(target) {
 }
 function get_each_context4(ctx, list, i) {
   const child_ctx = ctx.slice();
-  child_ctx[22] = list[i].rule;
-  child_ctx[23] = list[i].rule_i;
-  child_ctx[24] = list[i].name;
-  child_ctx[25] = list;
-  child_ctx[26] = i;
+  child_ctx[25] = list[i].rule;
+  child_ctx[26] = list[i].rule_i;
+  child_ctx[27] = list[i].name;
+  child_ctx[28] = list;
+  child_ctx[29] = i;
   return child_ctx;
 }
 function get_each_context_12(ctx, list, i) {
   const child_ctx = ctx.slice();
-  child_ctx[27] = list[i];
-  child_ctx[29] = i;
+  child_ctx[30] = list[i];
+  child_ctx[32] = i;
   return child_ctx;
 }
 function create_if_block_32(ctx) {
   let button;
-  let a;
   let arrowdown;
-  let a_href_value;
   let current;
+  let mounted;
+  let dispose;
   arrowdown = new arrow_down_default({ props: { size: ICON_SIZE } });
   return {
     c() {
       button = element("button");
-      a = element("a");
       create_component(arrowdown.$$.fragment);
-      attr(a, "href", a_href_value = "#" + /*actions*/
-      ctx[5].make_id(
-        /*transitives*/
-        ctx[3].length - 1
-      ));
-      attr(button, "class", "w-8");
+      attr(button, "class", "w-10");
       attr(button, "aria-label", "Jump to bottom");
     },
     m(target, anchor) {
       insert(target, button, anchor);
-      append(button, a);
-      mount_component(arrowdown, a, null);
+      mount_component(arrowdown, button, null);
       current = true;
-    },
-    p(ctx2, dirty) {
-      if (!current || dirty & /*transitives*/
-      8 && a_href_value !== (a_href_value = "#" + /*actions*/
-      ctx2[5].make_id(
-        /*transitives*/
-        ctx2[3].length - 1
-      ))) {
-        attr(a, "href", a_href_value);
+      if (!mounted) {
+        dispose = listen(
+          button,
+          "click",
+          /*click_handler_1*/
+          ctx[9]
+        );
+        mounted = true;
       }
     },
+    p: noop,
     i(local) {
       if (current)
         return;
@@ -29585,6 +29617,8 @@ function create_if_block_32(ctx) {
         detach(button);
       }
       destroy_component(arrowdown);
+      mounted = false;
+      dispose();
     }
   };
 }
@@ -29634,14 +29668,14 @@ function create_if_block_12(ctx) {
   let current;
   let each_value_1 = ensure_array_like(
     /*rule*/
-    ctx[22].chain
+    ctx[25].chain
   );
   const get_key = (ctx2) => {
     var _a;
     return (
       /*attr_i*/
-      ctx2[29] + /*attr*/
-      ((_a = ctx2[27].field) != null ? _a : "")
+      ctx2[32] + /*attr*/
+      ((_a = ctx2[30].field) != null ? _a : "")
     );
   };
   for (let i = 0; i < each_value_1.length; i += 1) {
@@ -29667,11 +29701,11 @@ function create_if_block_12(ctx) {
       current = true;
     },
     p(ctx2, dirty) {
-      if (dirty & /*transitives, filter, context_menus*/
+      if (dirty[0] & /*transitives, filter, context_menus*/
       76) {
         each_value_1 = ensure_array_like(
           /*rule*/
-          ctx2[22].chain
+          ctx2[25].chain
         );
         group_outros();
         each_blocks = update_keyed_each(each_blocks, dirty, get_key, 1, ctx2, each_value_1, each_1_lookup, div, outro_and_destroy_block, create_each_block_12, null, get_each_context_12);
@@ -29711,7 +29745,7 @@ function create_each_block_12(key_1, ctx) {
     props: {
       tag: (
         /*attr*/
-        (_a = ctx[27].field) != null ? _a : ""
+        (_a = ctx[30].field) != null ? _a : ""
       ),
       title: "Right click for more actions."
     }
@@ -29721,16 +29755,16 @@ function create_each_block_12(key_1, ctx) {
       /*context_menus*/
       ctx[6].chain_field(
         /*rule_i*/
-        ctx[23],
+        ctx[26],
         /*attr_i*/
-        ctx[29]
+        ctx[32]
       )
     ))
       ctx[6].chain_field(
         /*rule_i*/
-        ctx[23],
+        ctx[26],
         /*attr_i*/
-        ctx[29]
+        ctx[32]
       ).apply(this, arguments);
   });
   return {
@@ -29750,10 +29784,10 @@ function create_each_block_12(key_1, ctx) {
       var _a2;
       ctx = new_ctx;
       const tag_changes = {};
-      if (dirty & /*transitives, filter*/
+      if (dirty[0] & /*transitives, filter*/
       12)
         tag_changes.tag = /*attr*/
-        (_a2 = ctx[27].field) != null ? _a2 : "";
+        (_a2 = ctx[30].field) != null ? _a2 : "";
       tag.$set(tag_changes);
     },
     i(local) {
@@ -29785,7 +29819,7 @@ function create_if_block4(ctx) {
       ),
       mermaid: Mermaid.from_edges(transitive_rule_to_edges(
         /*rule*/
-        ctx[22]
+        ctx[25]
       ), {
         show_attributes: ["field"],
         collapse_opposing_edges: false
@@ -29802,15 +29836,15 @@ function create_if_block4(ctx) {
     },
     p(ctx2, dirty) {
       const mermaiddiagram_changes = {};
-      if (dirty & /*plugin*/
+      if (dirty[0] & /*plugin*/
       1)
         mermaiddiagram_changes.plugin = /*plugin*/
         ctx2[0];
-      if (dirty & /*transitives, filter*/
+      if (dirty[0] & /*transitives, filter*/
       12)
         mermaiddiagram_changes.mermaid = Mermaid.from_edges(transitive_rule_to_edges(
           /*rule*/
-          ctx2[22]
+          ctx2[25]
         ), {
           show_attributes: ["field"],
           collapse_opposing_edges: false
@@ -29833,7 +29867,7 @@ function create_if_block4(ctx) {
   };
 }
 function create_key_block2(ctx) {
-  let div5;
+  let div6;
   let div0;
   let span0;
   let t1;
@@ -29860,12 +29894,15 @@ function create_key_block2(ctx) {
   let input1_max_value;
   let input1_value_value;
   let t12;
-  let div4;
+  let div5;
   let span4;
   let t14;
+  let div4;
   let input2;
   let input2_value_value;
   let t15;
+  let button;
+  let t17;
   let current;
   let mounted;
   let dispose;
@@ -29874,19 +29911,19 @@ function create_key_block2(ctx) {
   function select_block_type(ctx2, dirty) {
     if (
       /*rule*/
-      ctx2[22].chain.length
+      ctx2[25].chain.length
     )
       return 0;
     return 1;
   }
-  current_block_type_index = select_block_type(ctx, -1);
+  current_block_type_index = select_block_type(ctx, [-1, -1]);
   if_block0 = if_blocks[current_block_type_index] = if_block_creators[current_block_type_index](ctx);
   function select_handler(...args) {
     return (
       /*select_handler*/
-      ctx[14](
+      ctx[16](
         /*rule_i*/
-        ctx[23],
+        ctx[26],
         ...args
       )
     );
@@ -29901,9 +29938,9 @@ function create_key_block2(ctx) {
   function func_2(...args) {
     return (
       /*func_2*/
-      ctx[15](
+      ctx[17](
         /*rule*/
-        ctx[22],
+        ctx[25],
         ...args
       )
     );
@@ -29911,9 +29948,9 @@ function create_key_block2(ctx) {
   function select_handler_1(...args) {
     return (
       /*select_handler_1*/
-      ctx[16](
+      ctx[18](
         /*rule_i*/
-        ctx[23],
+        ctx[26],
         ...args
       )
     );
@@ -29933,20 +29970,20 @@ function create_key_block2(ctx) {
   });
   edgefieldselector1.$on("select", select_handler_1);
   function input0_change_handler() {
-    ctx[17].call(
+    ctx[19].call(
       input0,
       /*each_value*/
-      ctx[25],
+      ctx[28],
       /*each_index*/
-      ctx[26]
+      ctx[29]
     );
   }
-  function click_handler_4(...args) {
+  function click_handler_6(...args) {
     return (
-      /*click_handler_4*/
-      ctx[18](
+      /*click_handler_6*/
+      ctx[20](
         /*rule_i*/
-        ctx[23],
+        ctx[26],
         ...args
       )
     );
@@ -29954,9 +29991,9 @@ function create_key_block2(ctx) {
   function blur_handler(...args) {
     return (
       /*blur_handler*/
-      ctx[19](
+      ctx[21](
         /*rule_i*/
-        ctx[23],
+        ctx[26],
         ...args
       )
     );
@@ -29964,10 +30001,19 @@ function create_key_block2(ctx) {
   function blur_handler_1(...args) {
     return (
       /*blur_handler_1*/
-      ctx[20](
+      ctx[22](
         /*rule_i*/
-        ctx[23],
+        ctx[26],
         ...args
+      )
+    );
+  }
+  function click_handler_7() {
+    return (
+      /*click_handler_7*/
+      ctx[23](
+        /*rule_i*/
+        ctx[26]
       )
     );
   }
@@ -29975,12 +30021,12 @@ function create_key_block2(ctx) {
     /*opens*/
     ctx[4][
       /*rule_i*/
-      ctx[23]
+      ctx[26]
     ] && create_if_block4(ctx)
   );
   return {
     c() {
-      div5 = element("div");
+      div6 = element("div");
       div0 = element("div");
       span0 = element("span");
       span0.textContent = "Edge Chain:";
@@ -30007,12 +30053,16 @@ function create_key_block2(ctx) {
       t11 = space();
       input1 = element("input");
       t12 = space();
-      div4 = element("div");
+      div5 = element("div");
       span4 = element("span");
       span4.textContent = "Name (optional):";
       t14 = space();
+      div4 = element("div");
       input2 = element("input");
       t15 = space();
+      button = element("button");
+      button.textContent = "X";
+      t17 = space();
       if (if_block1)
         if_block1.c();
       attr(span0, "class", "font-semibold");
@@ -30026,55 +30076,61 @@ function create_key_block2(ctx) {
       attr(input1, "min", input1_min_value = 0);
       attr(input1, "max", input1_max_value = 100);
       input1.value = input1_value_value = /*rule*/
-      ctx[22].rounds;
+      ctx[25].rounds;
       attr(span4, "class", "font-semibold");
       attr(input2, "type", "text");
       input2.value = input2_value_value = /*rule*/
-      ctx[22].name;
+      ctx[25].name;
       attr(input2, "placeholder", "Rule Name");
-      attr(div4, "class", "flex flex-wrap items-center gap-3");
-      attr(div5, "class", "my-2 flex flex-col gap-3 px-4 py-2");
+      attr(button, "aria-label", "Reset Name");
+      attr(div4, "class", "flex gap-1");
+      attr(div5, "class", "flex flex-wrap items-center gap-3");
+      attr(div6, "class", "my-2 flex flex-col gap-3 px-4 py-2");
     },
     m(target, anchor) {
-      insert(target, div5, anchor);
-      append(div5, div0);
+      insert(target, div6, anchor);
+      append(div6, div0);
       append(div0, span0);
       append(div0, t1);
       if_blocks[current_block_type_index].m(div0, null);
       append(div0, t2);
       mount_component(edgefieldselector0, div0, null);
-      append(div5, t3);
-      append(div5, div1);
+      append(div6, t3);
+      append(div6, div1);
       append(div1, span1);
       append(div1, t5);
       mount_component(edgefieldselector1, div1, null);
-      append(div5, t6);
-      append(div5, div2);
+      append(div6, t6);
+      append(div6, div2);
       append(div2, span2);
       append(div2, t8);
       append(div2, input0);
       input0.checked = /*rule*/
-      ctx[22].close_reversed;
-      append(div5, t9);
-      append(div5, div3);
+      ctx[25].close_reversed;
+      append(div6, t9);
+      append(div6, div3);
       append(div3, span3);
       append(div3, t11);
       append(div3, input1);
-      append(div5, t12);
+      append(div6, t12);
+      append(div6, div5);
+      append(div5, span4);
+      append(div5, t14);
       append(div5, div4);
-      append(div4, span4);
-      append(div4, t14);
       append(div4, input2);
-      append(div5, t15);
+      append(div4, t15);
+      append(div4, button);
+      append(div6, t17);
       if (if_block1)
-        if_block1.m(div5, null);
+        if_block1.m(div6, null);
       current = true;
       if (!mounted) {
         dispose = [
           listen(input0, "change", input0_change_handler),
-          listen(input0, "click", click_handler_4),
+          listen(input0, "click", click_handler_6),
           listen(input1, "blur", blur_handler),
-          listen(input2, "blur", blur_handler_1)
+          listen(input2, "blur", blur_handler_1),
+          listen(button, "click", click_handler_7)
         ];
         mounted = true;
       }
@@ -30102,46 +30158,46 @@ function create_key_block2(ctx) {
         if_block0.m(div0, t2);
       }
       const edgefieldselector0_changes = {};
-      if (dirty & /*settings*/
+      if (dirty[0] & /*settings*/
       2)
         edgefieldselector0_changes.fields = /*settings*/
         ctx[1].edge_fields;
       edgefieldselector0.$set(edgefieldselector0_changes);
       const edgefieldselector1_changes = {};
-      if (dirty & /*settings*/
+      if (dirty[0] & /*settings*/
       2)
         edgefieldselector1_changes.fields = /*settings*/
         ctx[1].edge_fields;
-      if (dirty & /*settings, transitives, filter*/
+      if (dirty[0] & /*settings, transitives, filter*/
       14)
         edgefieldselector1_changes.field = /*settings*/
         ctx[1].edge_fields.find(func_2);
       edgefieldselector1.$set(edgefieldselector1_changes);
-      if (dirty & /*transitives, filter*/
+      if (dirty[0] & /*transitives, filter*/
       12) {
         input0.checked = /*rule*/
-        ctx[22].close_reversed;
+        ctx[25].close_reversed;
       }
-      if (!current || dirty & /*transitives, filter*/
+      if (!current || dirty[0] & /*transitives, filter*/
       12 && input1_value_value !== (input1_value_value = /*rule*/
-      ctx[22].rounds) && input1.value !== input1_value_value) {
+      ctx[25].rounds) && input1.value !== input1_value_value) {
         input1.value = input1_value_value;
       }
-      if (!current || dirty & /*transitives, filter*/
+      if (!current || dirty[0] & /*transitives, filter*/
       12 && input2_value_value !== (input2_value_value = /*rule*/
-      ctx[22].name) && input2.value !== input2_value_value) {
+      ctx[25].name) && input2.value !== input2_value_value) {
         input2.value = input2_value_value;
       }
       if (
         /*opens*/
         ctx[4][
           /*rule_i*/
-          ctx[23]
+          ctx[26]
         ]
       ) {
         if (if_block1) {
           if_block1.p(ctx, dirty);
-          if (dirty & /*opens, transitives, filter*/
+          if (dirty[0] & /*opens, transitives, filter*/
           28) {
             transition_in(if_block1, 1);
           }
@@ -30149,7 +30205,7 @@ function create_key_block2(ctx) {
           if_block1 = create_if_block4(ctx);
           if_block1.c();
           transition_in(if_block1, 1);
-          if_block1.m(div5, null);
+          if_block1.m(div6, null);
         }
       } else if (if_block1) {
         group_outros();
@@ -30177,7 +30233,7 @@ function create_key_block2(ctx) {
     },
     d(detaching) {
       if (detaching) {
-        detach(div5);
+        detach(div6);
       }
       if_blocks[current_block_type_index].d();
       destroy_component(edgefieldselector0);
@@ -30198,7 +30254,7 @@ function create_each_block4(key_1, ctx) {
   let code;
   let t1_value = (
     /*name*/
-    ctx[24] + ""
+    ctx[27] + ""
   );
   let t1;
   let t2;
@@ -30212,10 +30268,13 @@ function create_each_block4(key_1, ctx) {
   let button1_disabled_value;
   let t4;
   let button2;
-  let t6;
+  let clipboardicon;
+  let t5;
+  let button3;
+  let t7;
   let previous_key = (
     /*rule*/
-    ctx[22]
+    ctx[25]
   );
   let details_id_value;
   let current;
@@ -30227,46 +30286,56 @@ function create_each_block4(key_1, ctx) {
         /*opens*/
         ctx[4][
           /*rule_i*/
-          ctx[23]
+          ctx[26]
         ]
       )
     }
   });
   arrowup = new arrow_up_default({ props: { size: ICON_SIZE } });
-  function click_handler_1() {
-    return (
-      /*click_handler_1*/
-      ctx[11](
-        /*rule_i*/
-        ctx[23]
-      )
-    );
-  }
-  arrowdown = new arrow_down_default({ props: { size: ICON_SIZE } });
   function click_handler_2() {
     return (
       /*click_handler_2*/
       ctx[12](
         /*rule_i*/
-        ctx[23]
+        ctx[26]
       )
     );
   }
+  arrowdown = new arrow_down_default({ props: { size: ICON_SIZE } });
   function click_handler_3() {
     return (
       /*click_handler_3*/
       ctx[13](
         /*rule_i*/
-        ctx[23]
+        ctx[26]
+      )
+    );
+  }
+  clipboardicon = new clipboard_default({ props: { size: ICON_SIZE } });
+  function click_handler_4() {
+    return (
+      /*click_handler_4*/
+      ctx[14](
+        /*rule_i*/
+        ctx[26]
+      )
+    );
+  }
+  function click_handler_5() {
+    return (
+      /*click_handler_5*/
+      ctx[15](
+        /*rule_i*/
+        ctx[26]
       )
     );
   }
   let key_block = create_key_block2(ctx);
   function details_toggle_handler() {
-    ctx[21].call(
+    ctx[24].call(
       details,
       /*rule_i*/
-      ctx[23]
+      ctx[26]
     );
   }
   return {
@@ -30289,22 +30358,26 @@ function create_each_block4(key_1, ctx) {
       create_component(arrowdown.$$.fragment);
       t4 = space();
       button2 = element("button");
-      button2.textContent = "X";
-      t6 = space();
+      create_component(clipboardicon.$$.fragment);
+      t5 = space();
+      button3 = element("button");
+      button3.textContent = "X";
+      t7 = space();
       key_block.c();
       attr(div0, "class", "flex items-center gap-2");
       button0.disabled = button0_disabled_value = /*rule_i*/
-      ctx[23] === 0;
+      ctx[26] === 0;
       button1.disabled = button1_disabled_value = /*rule_i*/
-      ctx[23] === /*transitives*/
+      ctx[26] === /*transitives*/
       ctx[3].length - 1;
-      attr(button2, "aria-label", "Delete Transitive Implied Relation");
+      attr(button2, "aria-label", "Copy Transitive Implied Relation");
+      attr(button3, "aria-label", "Delete Transitive Implied Relation");
       attr(div1, "class", "flex gap-1");
       attr(summary, "class", "flex items-center justify-between gap-2");
       attr(details, "id", details_id_value = /*actions*/
       ctx[5].make_id(
         /*rule_i*/
-        ctx[23]
+        ctx[26]
       ));
       attr(details, "class", "scroll-mt-40 rounded border p-2 svelte-17indbq");
       this.first = details;
@@ -30326,19 +30399,23 @@ function create_each_block4(key_1, ctx) {
       mount_component(arrowdown, button1, null);
       append(div1, t4);
       append(div1, button2);
-      append(details, t6);
+      mount_component(clipboardicon, button2, null);
+      append(div1, t5);
+      append(div1, button3);
+      append(details, t7);
       key_block.m(details, null);
       details.open = /*opens*/
       ctx[4][
         /*rule_i*/
-        ctx[23]
+        ctx[26]
       ];
       current = true;
       if (!mounted) {
         dispose = [
-          listen(button0, "click", click_handler_1),
-          listen(button1, "click", click_handler_2),
-          listen(button2, "click", click_handler_3),
+          listen(button0, "click", click_handler_2),
+          listen(button1, "click", click_handler_3),
+          listen(button2, "click", click_handler_4),
+          listen(button3, "click", click_handler_5),
           listen(details, "toggle", details_toggle_handler)
         ];
         mounted = true;
@@ -30347,32 +30424,32 @@ function create_each_block4(key_1, ctx) {
     p(new_ctx, dirty) {
       ctx = new_ctx;
       const chevronopener_changes = {};
-      if (dirty & /*opens, transitives, filter*/
+      if (dirty[0] & /*opens, transitives, filter*/
       28)
         chevronopener_changes.open = /*opens*/
         ctx[4][
           /*rule_i*/
-          ctx[23]
+          ctx[26]
         ];
       chevronopener.$set(chevronopener_changes);
-      if ((!current || dirty & /*transitives, filter*/
+      if ((!current || dirty[0] & /*transitives, filter*/
       12) && t1_value !== (t1_value = /*name*/
-      ctx[24] + ""))
+      ctx[27] + ""))
         set_data(t1, t1_value);
-      if (!current || dirty & /*transitives, filter*/
+      if (!current || dirty[0] & /*transitives, filter*/
       12 && button0_disabled_value !== (button0_disabled_value = /*rule_i*/
-      ctx[23] === 0)) {
+      ctx[26] === 0)) {
         button0.disabled = button0_disabled_value;
       }
-      if (!current || dirty & /*transitives, filter*/
+      if (!current || dirty[0] & /*transitives, filter*/
       12 && button1_disabled_value !== (button1_disabled_value = /*rule_i*/
-      ctx[23] === /*transitives*/
+      ctx[26] === /*transitives*/
       ctx[3].length - 1)) {
         button1.disabled = button1_disabled_value;
       }
-      if (dirty & /*transitives, filter*/
+      if (dirty[0] & /*transitives, filter*/
       12 && safe_not_equal(previous_key, previous_key = /*rule*/
-      ctx[22])) {
+      ctx[25])) {
         group_outros();
         transition_out(key_block, 1, 1, noop);
         check_outros();
@@ -30383,20 +30460,20 @@ function create_each_block4(key_1, ctx) {
       } else {
         key_block.p(ctx, dirty);
       }
-      if (!current || dirty & /*transitives, filter*/
+      if (!current || dirty[0] & /*transitives, filter*/
       12 && details_id_value !== (details_id_value = /*actions*/
       ctx[5].make_id(
         /*rule_i*/
-        ctx[23]
+        ctx[26]
       ))) {
         attr(details, "id", details_id_value);
       }
-      if (dirty & /*opens, transitives, filter*/
+      if (dirty[0] & /*opens, transitives, filter*/
       28) {
         details.open = /*opens*/
         ctx[4][
           /*rule_i*/
-          ctx[23]
+          ctx[26]
         ];
       }
     },
@@ -30406,6 +30483,7 @@ function create_each_block4(key_1, ctx) {
       transition_in(chevronopener.$$.fragment, local);
       transition_in(arrowup.$$.fragment, local);
       transition_in(arrowdown.$$.fragment, local);
+      transition_in(clipboardicon.$$.fragment, local);
       transition_in(key_block);
       current = true;
     },
@@ -30413,6 +30491,7 @@ function create_each_block4(key_1, ctx) {
       transition_out(chevronopener.$$.fragment, local);
       transition_out(arrowup.$$.fragment, local);
       transition_out(arrowdown.$$.fragment, local);
+      transition_out(clipboardicon.$$.fragment, local);
       transition_out(key_block);
       current = false;
     },
@@ -30423,6 +30502,7 @@ function create_each_block4(key_1, ctx) {
       destroy_component(chevronopener);
       destroy_component(arrowup);
       destroy_component(arrowdown);
+      destroy_component(clipboardicon);
       key_block.d(detaching);
       mounted = false;
       run_all(dispose);
@@ -30430,12 +30510,12 @@ function create_each_block4(key_1, ctx) {
   };
 }
 function create_fragment27(ctx) {
-  let div3;
-  let p;
+  let div4;
+  let p0;
   let t0;
   let em;
   let t2;
-  let code;
+  let code0;
   let t5;
   let t6;
   let div1;
@@ -30452,13 +30532,23 @@ function create_fragment27(ctx) {
   let t11;
   let t12;
   let t13;
-  let div2;
+  let div3;
   let each_blocks = [];
   let each_1_lookup = /* @__PURE__ */ new Map();
   let t14;
   let button2;
   let plusicon;
   let t15;
+  let t16;
+  let details;
+  let summary;
+  let t18;
+  let div2;
+  let p1;
+  let t22;
+  let textarea;
+  let t23;
+  let button3;
   let current;
   let mounted;
   let dispose;
@@ -30475,16 +30565,16 @@ function create_fragment27(ctx) {
     /*transitives*/
     ctx[3].map(
       /*func*/
-      ctx[9]
+      ctx[10]
     ).filter(
       /*func_1*/
-      ctx[10]
+      ctx[11]
     )
   );
   const get_key = (ctx2) => (
     /*name*/
-    ctx2[24] + /*rule_i*/
-    ctx2[23]
+    ctx2[27] + /*rule_i*/
+    ctx2[26]
   );
   for (let i = 0; i < each_value.length; i += 1) {
     let child_ctx = get_each_context4(ctx, each_value, i);
@@ -30494,14 +30584,14 @@ function create_fragment27(ctx) {
   plusicon = new plus_default({ props: { size: ICON_SIZE } });
   return {
     c() {
-      div3 = element("div");
-      p = element("p");
+      div4 = element("div");
+      p0 = element("p");
       t0 = text("Transitive implied relations represent ");
       em = element("em");
       em.textContent = "chains";
       t2 = text(' of your\n		Breadcrumbs fields that collapse into a single field. For example, if\n		you have the fields: "spouse", "sibling", and "sibling-in-law", you can\n		add the transitive chain\n		');
-      code = element("code");
-      code.textContent = `${stringify_transitive_relation({
+      code0 = element("code");
+      code0.textContent = `${stringify_transitive_relation({
         close_reversed: false,
         close_field: "sibling-in-law",
         chain: [{ field: "spouse" }, { field: "sibling" }]
@@ -30525,7 +30615,7 @@ function create_fragment27(ctx) {
       if (if_block1)
         if_block1.c();
       t13 = space();
-      div2 = element("div");
+      div3 = element("div");
       for (let i = 0; i < each_blocks.length; i += 1) {
         each_blocks[i].c();
       }
@@ -30533,6 +30623,20 @@ function create_fragment27(ctx) {
       button2 = element("button");
       create_component(plusicon.$$.fragment);
       t15 = text("\n			Add New Transitive Implied Relation");
+      t16 = space();
+      details = element("details");
+      summary = element("summary");
+      summary.textContent = "Bulk Add Rules (Advanced)";
+      t18 = space();
+      div2 = element("div");
+      p1 = element("p");
+      p1.innerHTML = `Quickly add multiple rules using the shorthand syntax: <code>[field-one, field-two] -&gt; close-field
+					</code>. Each rule should be on a new line.`;
+      t22 = space();
+      textarea = element("textarea");
+      t23 = space();
+      button3 = element("button");
+      button3.textContent = "Bulk Add";
       attr(button0, "class", "flex items-center gap-1");
       attr(input, "type", "text");
       attr(input, "placeholder", "Filter Rules by Name");
@@ -30543,19 +30647,25 @@ function create_fragment27(ctx) {
       attr(div0, "class", "flex gap-1");
       attr(div1, "class", "my-2 flex items-center gap-2");
       attr(button2, "class", "flex items-center gap-1");
-      attr(div2, "class", "flex flex-col gap-3");
-      attr(div3, "class", "BC-custom-transitive-implied-relations");
+      attr(textarea, "id", "BC-transitive-bulk-str");
+      attr(textarea, "class", "h-32 w-60");
+      attr(textarea, "placeholder", "[up] <- down");
+      attr(button3, "class", "w-60");
+      attr(div2, "class", "flex flex-col gap-1");
+      details.open = true;
+      attr(div3, "class", "flex flex-col gap-3");
+      attr(div4, "class", "BC-custom-transitive-implied-relations");
     },
     m(target, anchor) {
-      insert(target, div3, anchor);
-      append(div3, p);
-      append(p, t0);
-      append(p, em);
-      append(p, t2);
-      append(p, code);
-      append(p, t5);
-      append(div3, t6);
-      append(div3, div1);
+      insert(target, div4, anchor);
+      append(div4, p0);
+      append(p0, t0);
+      append(p0, em);
+      append(p0, t2);
+      append(p0, code0);
+      append(p0, t5);
+      append(div4, t6);
+      append(div4, div1);
       append(div1, button0);
       mount_component(saveicon, button0, null);
       append(button0, t7);
@@ -30576,17 +30686,27 @@ function create_fragment27(ctx) {
       append(div1, t12);
       if (if_block1)
         if_block1.m(div1, null);
-      append(div3, t13);
-      append(div3, div2);
+      append(div4, t13);
+      append(div4, div3);
       for (let i = 0; i < each_blocks.length; i += 1) {
         if (each_blocks[i]) {
-          each_blocks[i].m(div2, null);
+          each_blocks[i].m(div3, null);
         }
       }
-      append(div2, t14);
-      append(div2, button2);
+      append(div3, t14);
+      append(div3, button2);
       mount_component(plusicon, button2, null);
       append(button2, t15);
+      append(div3, t16);
+      append(div3, details);
+      append(details, summary);
+      append(details, t18);
+      append(details, div2);
+      append(div2, p1);
+      append(div2, t22);
+      append(div2, textarea);
+      append(div2, t23);
+      append(div2, button3);
       current = true;
       if (!mounted) {
         dispose = [
@@ -30613,13 +30733,19 @@ function create_fragment27(ctx) {
             "click",
             /*actions*/
             ctx[5].add_transitive
+          ),
+          listen(
+            button3,
+            "click",
+            /*actions*/
+            ctx[5].add_bulk
           )
         ];
         mounted = true;
       }
     },
-    p(ctx2, [dirty]) {
-      if (dirty & /*filter*/
+    p(ctx2, dirty) {
+      if (dirty[0] & /*filter*/
       4 && input.value !== /*filter*/
       ctx2[2]) {
         set_input_value(
@@ -30628,7 +30754,7 @@ function create_fragment27(ctx) {
           ctx2[2]
         );
       }
-      if (!current || dirty & /*filter*/
+      if (!current || dirty[0] & /*filter*/
       4 && button1_disabled_value !== (button1_disabled_value = /*filter*/
       ctx2[2] === "")) {
         button1.disabled = button1_disabled_value;
@@ -30639,7 +30765,7 @@ function create_fragment27(ctx) {
       ) {
         if (if_block0) {
           if_block0.p(ctx2, dirty);
-          if (dirty & /*transitives*/
+          if (dirty[0] & /*transitives*/
           8) {
             transition_in(if_block0, 1);
           }
@@ -30670,20 +30796,20 @@ function create_fragment27(ctx) {
         if_block1.d(1);
         if_block1 = null;
       }
-      if (dirty & /*actions, transitives, filter, opens, plugin, settings, context_menus*/
+      if (dirty[0] & /*actions, transitives, filter, opens, plugin, settings, context_menus*/
       127) {
         each_value = ensure_array_like(
           /*transitives*/
           ctx2[3].map(
             /*func*/
-            ctx2[9]
+            ctx2[10]
           ).filter(
             /*func_1*/
-            ctx2[10]
+            ctx2[11]
           )
         );
         group_outros();
-        each_blocks = update_keyed_each(each_blocks, dirty, get_key, 1, ctx2, each_value, each_1_lookup, div2, outro_and_destroy_block, create_each_block4, t14, get_each_context4);
+        each_blocks = update_keyed_each(each_blocks, dirty, get_key, 1, ctx2, each_value, each_1_lookup, div3, outro_and_destroy_block, create_each_block4, t14, get_each_context4);
         check_outros();
       }
     },
@@ -30709,7 +30835,7 @@ function create_fragment27(ctx) {
     },
     d(detaching) {
       if (detaching) {
-        detach(div3);
+        detach(div4);
       }
       destroy_component(saveicon);
       if (if_block0)
@@ -30743,6 +30869,10 @@ function instance27($$self, $$props, $$invalidate) {
       $$invalidate(0, plugin);
     }),
     make_id: (rule_i) => `BC-transitive-rule-${rule_i}`,
+    scroll_to: (rule_i) => {
+      var _a;
+      return (_a = document.getElementById(actions.make_id(rule_i))) === null || _a === void 0 ? void 0 : _a.scrollIntoView({ behavior: "smooth" });
+    },
     add_transitive: () => {
       const new_length = transitives.push({
         name: "",
@@ -30754,7 +30884,46 @@ function instance27($$self, $$props, $$invalidate) {
         close_field: settings.edge_fields[0].label
       });
       $$invalidate(4, opens[new_length - 1] = true, opens);
-      setTimeout(() => window.location.hash = actions.make_id(new_length - 1), 0);
+      setTimeout(() => actions.scroll_to(new_length - 1), 0);
+      $$invalidate(3, transitives);
+      $$invalidate(1, settings.is_dirty = true, settings);
+    },
+    add_bulk: () => {
+      const textarea = document.getElementById("BC-transitive-bulk-str");
+      if (!textarea)
+        return new import_obsidian10.Notice("Could not find textarea.");
+      const value = textarea.value.trim();
+      if (!value)
+        return new import_obsidian10.Notice("No rules to parse.");
+      const lines = split_and_trim(value, "\n").filter(Boolean);
+      const parsed = lines.map(parse_transitive_relation).filter((r) => r.ok);
+      if (parsed.length !== lines.length) {
+        return new import_obsidian10.Notice("Some rules could not be parsed. Ensure you're using the correct syntax of `[field-one, field-two] -> close-field`, with each rule of a new line.");
+      }
+      const validated = parsed.map((r) => input_transitive_rule_schema({ fields: plugin.settings.edge_fields }).safeParse(r.data));
+      const validation_errors = validated.filter((r) => !r.success);
+      if (validation_errors.length) {
+        log.error("Bulk-add transitive rule errors >", validation_errors.map((r) => {
+          var _a;
+          return r.success ? null : (_a = r.error) === null || _a === void 0 ? void 0 : _a.issues;
+        }));
+        return new import_obsidian10.Notice("Some rules could not be parsed. Check the logs for more information.");
+      }
+      validated.forEach((r) => {
+        if (r.success) {
+          transitives.push(Object.assign(Object.assign({}, r.data), { name: "", rounds: 10 }));
+        }
+      });
+      new import_obsidian10.Notice(`Bulk added ${validated.length} rules \u2705`);
+      $$invalidate(3, transitives);
+      $$invalidate(1, settings.is_dirty = true, settings);
+    },
+    copy_transitive: (i) => {
+      const new_length = transitives.push(Object.assign(Object.assign({}, transitives[i]), {
+        name: `${get_transitive_rule_name(transitives[i])} (copy)`
+      }));
+      $$invalidate(4, opens[new_length - 1] = true, opens);
+      setTimeout(() => actions.scroll_to(new_length - 1), 0);
       $$invalidate(3, transitives);
       $$invalidate(1, settings.is_dirty = true, settings);
     },
@@ -30820,15 +30989,17 @@ function instance27($$self, $$props, $$invalidate) {
     $$invalidate(2, filter);
   }
   const click_handler = () => $$invalidate(2, filter = "");
+  const click_handler_1 = () => actions.scroll_to(transitives.length - 1);
   const func = (rule, rule_i) => ({
     rule,
     rule_i,
     name: get_transitive_rule_name(rule)
   });
   const func_1 = (r) => r.name.includes(filter.toLowerCase());
-  const click_handler_1 = (rule_i) => actions.reorder_transitive(rule_i, rule_i - 1);
-  const click_handler_2 = (rule_i) => actions.reorder_transitive(rule_i, rule_i + 1);
-  const click_handler_3 = (rule_i) => actions.remove_transitive(rule_i);
+  const click_handler_2 = (rule_i) => actions.reorder_transitive(rule_i, rule_i - 1);
+  const click_handler_3 = (rule_i) => actions.reorder_transitive(rule_i, rule_i + 1);
+  const click_handler_4 = (rule_i) => actions.copy_transitive(rule_i);
+  const click_handler_5 = (rule_i) => actions.remove_transitive(rule_i);
   const select_handler = (rule_i, e) => actions.add_chain_field(rule_i, e.detail);
   const func_2 = (rule, f) => f.label === rule.close_field;
   const select_handler_1 = (rule_i, e) => actions.set_close_field(rule_i, e.detail);
@@ -30837,9 +31008,10 @@ function instance27($$self, $$props, $$invalidate) {
     $$invalidate(3, transitives);
     $$invalidate(2, filter);
   }
-  const click_handler_4 = (rule_i, e) => actions.set_close_reversed(rule_i, e.currentTarget.checked);
+  const click_handler_6 = (rule_i, e) => actions.set_close_reversed(rule_i, e.currentTarget.checked);
   const blur_handler = (rule_i, e) => actions.set_rounds(rule_i, +e.currentTarget.value);
   const blur_handler_1 = (rule_i, e) => actions.rename_transitive(rule_i, e.currentTarget.value);
+  const click_handler_7 = (rule_i) => actions.rename_transitive(rule_i, "");
   function details_toggle_handler(rule_i) {
     opens[rule_i] = this.open;
     $$invalidate(4, opens);
@@ -30858,25 +31030,28 @@ function instance27($$self, $$props, $$invalidate) {
     context_menus,
     input_input_handler,
     click_handler,
+    click_handler_1,
     func,
     func_1,
-    click_handler_1,
     click_handler_2,
     click_handler_3,
+    click_handler_4,
+    click_handler_5,
     select_handler,
     func_2,
     select_handler_1,
     input0_change_handler,
-    click_handler_4,
+    click_handler_6,
     blur_handler,
     blur_handler_1,
+    click_handler_7,
     details_toggle_handler
   ];
 }
 var TransitiveImpliedRelations = class extends SvelteComponent {
   constructor(options) {
     super();
-    init(this, options, instance27, create_fragment27, safe_not_equal, { plugin: 0 }, add_css);
+    init(this, options, instance27, create_fragment27, safe_not_equal, { plugin: 0 }, add_css, [-1, -1]);
   }
 };
 var TransitiveImpliedRelations_default = TransitiveImpliedRelations;
@@ -33651,10 +33826,7 @@ function create_fragment39(ctx) {
         each_blocks[i].c();
       }
       attr(div, "class", "BC-trail-view grid");
-      set_style(div, "grid-template-rows", "1fr ".repeat(
-        /*square*/
-        ctx[1].length
-      ));
+      set_style(div, "grid-template-rows", "min-content");
       set_style(div, "grid-template-columns", "1fr ".repeat(
         /*square*/
         (_b = (_a = ctx[1].at(0)) == null ? void 0 : _a.length) != null ? _b : 0

@@ -3,7 +3,14 @@
   "showAddCommand": true,
   "debug": false,
   "editorMenu": [],
-  "fileMenu": [],
+  "fileMenu": [
+    {
+      "id": "copy-publish-url:open-publish-url",
+      "icon": "book-open",
+      "name": "Open Publish URL in browser",
+      "mode": "any"
+    }
+  ],
   "leftRibbon": [],
   "rightRibbon": [],
   "titleBar": [],

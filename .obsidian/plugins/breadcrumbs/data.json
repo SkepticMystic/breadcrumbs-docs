@@ -90,7 +90,8 @@
           "sames",
           "nexts",
           "prevs"
-        ]
+        ],
+        "collapse": false
       },
       "tree": {
         "collapse": false,

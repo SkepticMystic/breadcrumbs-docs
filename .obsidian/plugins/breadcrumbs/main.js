@@ -9613,7 +9613,7 @@ __export(main_exports, {
   default: () => BreadcrumbsPlugin
 });
 module.exports = __toCommonJS(main_exports);
-var import_obsidian35 = require("obsidian");
+var import_obsidian37 = require("obsidian");
 
 // src/codeblocks/index.ts
 var import_obsidian = require("obsidian");
@@ -14953,9 +14953,10 @@ var DEFAULT_SETTINGS = {
     },
     side: {
       matrix: {
-        show_attributes: ["source", "implied_kind", "round"],
+        collapse: false,
         edge_sort_id: { ...DEFAULT_EDGE_SORT_ID },
         show_node_options: { ...DEFAULT_SHOW_NODE_OPTIONS },
+        show_attributes: ["source", "implied_kind", "round"],
         field_group_labels: ["ups", "downs", "sames", "nexts", "prevs"]
       },
       tree: {
@@ -15107,11 +15108,14 @@ var Timer = class {
   elapsed() {
     return performance.now() - this.start;
   }
+  elapsed_str(digits = 0) {
+    return this.elapsed().toFixed(digits);
+  }
   reset() {
     this.start = performance.now();
   }
   elapsedMessage(action, reset = false) {
-    const msg = `${action} took ${Math.round(this.elapsed() * 100) / 100}ms`;
+    const msg = `${action} took ${this.elapsed_str(2)}ms`;
     if (reset)
       this.reset();
     return msg;
@@ -22320,7 +22324,9 @@ var _add_explicit_edges_typed_link = (graph, plugin, all_files) => {
       ensure_is_array(page[field]).flat().forEach((target_link) => {
         var _a2;
         let unsafe_target_path;
-        if (typeof target_link === "string") {
+        if (!target_link)
+          return;
+        else if (typeof target_link === "string") {
           unsafe_target_path = (_a2 = target_link.match(MARKDOWN_LINK_REGEX)) == null ? void 0 : _a2[2];
         } else if (typeof target_link === "object" && (target_link == null ? void 0 : target_link.path)) {
           unsafe_target_path = target_link.path;
@@ -23248,7 +23254,7 @@ function make_dirty(component, i) {
   }
   component.$$.dirty[i / 31 | 0] |= 1 << i % 31;
 }
-function init(component, options, instance54, create_fragment54, not_equal, props, append_styles2 = null, dirty = [-1]) {
+function init(component, options, instance55, create_fragment55, not_equal, props, append_styles2 = null, dirty = [-1]) {
   const parent_component = current_component;
   set_current_component(component);
   const $$ = component.$$ = {
@@ -23274,7 +23280,7 @@ function init(component, options, instance54, create_fragment54, not_equal, prop
   };
   append_styles2 && append_styles2($$.root);
   let ready = false;
-  $$.ctx = instance54 ? instance54(component, options.props || {}, (i, ret, ...rest) => {
+  $$.ctx = instance55 ? instance55(component, options.props || {}, (i, ret, ...rest) => {
     const value = rest.length ? rest[0] : ret;
     if ($$.ctx && not_equal($$.ctx[i], $$.ctx[i] = value)) {
       if (!$$.skip_bound && $$.bound[i])
@@ -23287,7 +23293,7 @@ function init(component, options, instance54, create_fragment54, not_equal, prop
   $$.update();
   ready = true;
   run_all($$.before_update);
-  $$.fragment = create_fragment54 ? create_fragment54($$.ctx) : false;
+  $$.fragment = create_fragment55 ? create_fragment55($$.ctx) : false;
   if (options.target) {
     if (options.hydrate) {
       start_hydrating();
@@ -30652,7 +30658,6 @@ function create_fragment27(ctx) {
       attr(textarea, "placeholder", "[up] <- down");
       attr(button3, "class", "w-60");
       attr(div2, "class", "flex flex-col gap-1");
-      details.open = true;
       attr(div3, "class", "flex flex-col gap-3");
       attr(div4, "class", "BC-custom-transitive-implied-relations");
     },
@@ -31145,7 +31150,7 @@ var new_setting = (container_el, config) => {
     });
   } else if (config.checklist) {
     const checklist_el = setting.controlEl.createEl("div", {
-      attr: { class: "flex gap-3" }
+      attr: { class: "flex flex-wrap gap-3" }
     });
     let state = { ...config.checklist.options };
     Object.keys(config.checklist.options).forEach((key) => {
@@ -31154,8 +31159,9 @@ var new_setting = (container_el, config) => {
         attr2.checked = true;
       checklist_el.createEl("label", {
         text: key,
-        cls: "flex items-center gap-1.5"
+        cls: "flex items-center gap-1.5 grow"
       }).createEl("input", { attr: attr2 }, (el) => {
+        el.classList.add("shrink");
         el.onchange = (e) => {
           if (!(e.target instanceof HTMLInputElement))
             return;
@@ -32673,6 +32679,23 @@ var _add_settings_list_note = (plugin, containerEl) => {
 
 // src/settings/MatrixSettings.ts
 var _add_settings_matrix = (plugin, containerEl) => {
+  new_setting(containerEl, {
+    name: "Collapse",
+    desc: "Collapse the matrix by default",
+    toggle: {
+      value: plugin.settings.views.side.matrix.collapse,
+      cb: async (checked) => {
+        plugin.settings.views.side.matrix.collapse = checked;
+        await Promise.all([
+          plugin.saveSettings(),
+          plugin.refresh({
+            redraw_side_views: true,
+            rebuild_graph: false
+          })
+        ]);
+      }
+    }
+  });
   new EdgeSortIdSettingItem_default({
     target: containerEl,
     props: { edge_sort_id: plugin.settings.views.side.matrix.edge_sort_id }
@@ -35680,8 +35703,183 @@ var BreadcrumbsSettingTab = class extends import_obsidian24.PluginSettingTab {
 // src/views/matrix.ts
 var import_obsidian25 = require("obsidian");
 
-// src/components/button/RebuildGraphButton.svelte
+// src/components/button/ChevronCollapseButton.svelte
+function create_else_block6(ctx) {
+  let chevronsupdown;
+  let current;
+  chevronsupdown = new chevrons_up_down_default({ props: { size: ICON_SIZE } });
+  return {
+    c() {
+      create_component(chevronsupdown.$$.fragment);
+    },
+    m(target, anchor) {
+      mount_component(chevronsupdown, target, anchor);
+      current = true;
+    },
+    i(local) {
+      if (current)
+        return;
+      transition_in(chevronsupdown.$$.fragment, local);
+      current = true;
+    },
+    o(local) {
+      transition_out(chevronsupdown.$$.fragment, local);
+      current = false;
+    },
+    d(detaching) {
+      destroy_component(chevronsupdown, detaching);
+    }
+  };
+}
+function create_if_block12(ctx) {
+  let chevronsdownup;
+  let current;
+  chevronsdownup = new chevrons_down_up_default({ props: { size: ICON_SIZE } });
+  return {
+    c() {
+      create_component(chevronsdownup.$$.fragment);
+    },
+    m(target, anchor) {
+      mount_component(chevronsdownup, target, anchor);
+      current = true;
+    },
+    i(local) {
+      if (current)
+        return;
+      transition_in(chevronsdownup.$$.fragment, local);
+      current = true;
+    },
+    o(local) {
+      transition_out(chevronsdownup.$$.fragment, local);
+      current = false;
+    },
+    d(detaching) {
+      destroy_component(chevronsdownup, detaching);
+    }
+  };
+}
 function create_fragment43(ctx) {
+  let button;
+  let current_block_type_index;
+  let if_block;
+  let button_aria_label_value;
+  let current;
+  let mounted;
+  let dispose;
+  const if_block_creators = [create_if_block12, create_else_block6];
+  const if_blocks = [];
+  function select_block_type(ctx2, dirty) {
+    if (
+      /*collapse*/
+      ctx2[0]
+    )
+      return 0;
+    return 1;
+  }
+  current_block_type_index = select_block_type(ctx, -1);
+  if_block = if_blocks[current_block_type_index] = if_block_creators[current_block_type_index](ctx);
+  return {
+    c() {
+      button = element("button");
+      if_block.c();
+      attr(
+        button,
+        "class",
+        /*cls*/
+        ctx[1]
+      );
+      attr(button, "aria-label", button_aria_label_value = /*collapse*/
+      ctx[0] ? "Expand" : "Collapse");
+    },
+    m(target, anchor) {
+      insert(target, button, anchor);
+      if_blocks[current_block_type_index].m(button, null);
+      current = true;
+      if (!mounted) {
+        dispose = listen(
+          button,
+          "click",
+          /*click_handler*/
+          ctx[2]
+        );
+        mounted = true;
+      }
+    },
+    p(ctx2, [dirty]) {
+      let previous_block_index = current_block_type_index;
+      current_block_type_index = select_block_type(ctx2, dirty);
+      if (current_block_type_index !== previous_block_index) {
+        group_outros();
+        transition_out(if_blocks[previous_block_index], 1, 1, () => {
+          if_blocks[previous_block_index] = null;
+        });
+        check_outros();
+        if_block = if_blocks[current_block_type_index];
+        if (!if_block) {
+          if_block = if_blocks[current_block_type_index] = if_block_creators[current_block_type_index](ctx2);
+          if_block.c();
+        } else {
+        }
+        transition_in(if_block, 1);
+        if_block.m(button, null);
+      }
+      if (!current || dirty & /*cls*/
+      2) {
+        attr(
+          button,
+          "class",
+          /*cls*/
+          ctx2[1]
+        );
+      }
+      if (!current || dirty & /*collapse*/
+      1 && button_aria_label_value !== (button_aria_label_value = /*collapse*/
+      ctx2[0] ? "Expand" : "Collapse")) {
+        attr(button, "aria-label", button_aria_label_value);
+      }
+    },
+    i(local) {
+      if (current)
+        return;
+      transition_in(if_block);
+      current = true;
+    },
+    o(local) {
+      transition_out(if_block);
+      current = false;
+    },
+    d(detaching) {
+      if (detaching) {
+        detach(button);
+      }
+      if_blocks[current_block_type_index].d();
+      mounted = false;
+      dispose();
+    }
+  };
+}
+function instance43($$self, $$props, $$invalidate) {
+  let { cls = "" } = $$props;
+  let { collapse } = $$props;
+  const click_handler = () => $$invalidate(0, collapse = !collapse);
+  $$self.$$set = ($$props2) => {
+    if ("cls" in $$props2)
+      $$invalidate(1, cls = $$props2.cls);
+    if ("collapse" in $$props2)
+      $$invalidate(0, collapse = $$props2.collapse);
+  };
+  return [collapse, cls, click_handler];
+}
+var ChevronCollapseButton = class extends SvelteComponent {
+  constructor(options) {
+    super();
+    init(this, options, instance43, create_fragment43, safe_not_equal, { cls: 1, collapse: 0 });
+  }
+};
+var ChevronCollapseButton_default = ChevronCollapseButton;
+
+// src/components/button/RebuildGraphButton.svelte
+function create_fragment44(ctx) {
   let button;
   let rotateccw;
   let current;
@@ -35745,7 +35943,7 @@ function create_fragment43(ctx) {
     }
   };
 }
-function instance43($$self, $$props, $$invalidate) {
+function instance44($$self, $$props, $$invalidate) {
   let { cls = "" } = $$props;
   let { plugin } = $$props;
   const click_handler = () => plugin.refresh();
@@ -35760,13 +35958,13 @@ function instance43($$self, $$props, $$invalidate) {
 var RebuildGraphButton = class extends SvelteComponent {
   constructor(options) {
     super();
-    init(this, options, instance43, create_fragment43, safe_not_equal, { cls: 0, plugin: 1 });
+    init(this, options, instance44, create_fragment44, safe_not_equal, { cls: 0, plugin: 1 });
   }
 };
 var RebuildGraphButton_default = RebuildGraphButton;
 
 // src/components/obsidian/TreeItemFlair.svelte
-function create_fragment44(ctx) {
+function create_fragment45(ctx) {
   let div;
   let span;
   let t;
@@ -35826,7 +36024,7 @@ function create_fragment44(ctx) {
     }
   };
 }
-function instance44($$self, $$props, $$invalidate) {
+function instance45($$self, $$props, $$invalidate) {
   let { cls = "" } = $$props;
   let { label = "" } = $$props;
   let { aria_label = "" } = $$props;
@@ -35843,7 +36041,7 @@ function instance44($$self, $$props, $$invalidate) {
 var TreeItemFlair = class extends SvelteComponent {
   constructor(options) {
     super();
-    init(this, options, instance44, create_fragment44, safe_not_equal, { cls: 0, label: 1, aria_label: 2 });
+    init(this, options, instance45, create_fragment45, safe_not_equal, { cls: 0, label: 1, aria_label: 2 });
   }
 };
 var TreeItemFlair_default = TreeItemFlair;
@@ -35871,7 +36069,7 @@ function create_each_block9(ctx) {
       ),
       plugin: (
         /*plugin*/
-        ctx[2]
+        ctx[3]
       ),
       show_node_options: (
         /*show_node_options*/
@@ -35891,7 +36089,7 @@ function create_each_block9(ctx) {
         /*edge*/
         ctx[8].attr,
         /*show_attributes*/
-        ctx[3]
+        ctx[4]
       ), { trim_lone_param: true })
     }
   });
@@ -35921,26 +36119,26 @@ function create_each_block9(ctx) {
     p(ctx2, dirty) {
       const edgelink_changes = {};
       if (dirty & /*edges, sort*/
-      17)
+      34)
         edgelink_changes.edge = /*edge*/
         ctx2[8];
       if (dirty & /*plugin*/
-      4)
+      8)
         edgelink_changes.plugin = /*plugin*/
-        ctx2[2];
+        ctx2[3];
       edgelink.$set(edgelink_changes);
       const treeitemflair_changes = {};
       if (dirty & /*edges, sort*/
-      17)
+      34)
         treeitemflair_changes.label = /*edge*/
         ctx2[8].attr.explicit ? "x" : "i";
       if (dirty & /*edges, sort, show_attributes*/
-      25)
+      50)
         treeitemflair_changes.aria_label = url_search_params(untyped_pick(
           /*edge*/
           ctx2[8].attr,
           /*show_attributes*/
-          ctx2[3]
+          ctx2[4]
         ), { trim_lone_param: true });
       treeitemflair.$set(treeitemflair_changes);
     },
@@ -35970,9 +36168,9 @@ function create_key_block4(ctx) {
   let current;
   let each_value = ensure_array_like(
     /*edges*/
-    ctx[0].sort(
+    ctx[1].sort(
       /*sort*/
-      ctx[4]
+      ctx[5]
     )
   );
   let each_blocks = [];
@@ -36000,12 +36198,12 @@ function create_key_block4(ctx) {
     },
     p(ctx2, dirty) {
       if (dirty & /*edges, sort, show_attributes, plugin, show_node_options*/
-      93) {
+      122) {
         each_value = ensure_array_like(
           /*edges*/
-          ctx2[0].sort(
+          ctx2[1].sort(
             /*sort*/
-            ctx2[4]
+            ctx2[5]
           )
         );
         let i;
@@ -36051,7 +36249,7 @@ function create_key_block4(ctx) {
     }
   };
 }
-function create_fragment45(ctx) {
+function create_fragment46(ctx) {
   let details;
   let summary;
   let div0;
@@ -36061,7 +36259,7 @@ function create_fragment45(ctx) {
   let span0;
   let t1_value = (
     /*field*/
-    ctx[1].label + ""
+    ctx[2].label + ""
   );
   let t1;
   let t2;
@@ -36069,14 +36267,14 @@ function create_fragment45(ctx) {
   let span1;
   let t3_value = (
     /*edges*/
-    ctx[0].length + ""
+    ctx[1].length + ""
   );
   let t3;
   let t4;
   let div3;
   let previous_key = (
     /*sort*/
-    ctx[4]
+    ctx[5]
   );
   let details_class_value;
   let current;
@@ -36084,7 +36282,7 @@ function create_fragment45(ctx) {
   let dispose;
   chevronopener = new ChevronOpener_default({ props: { open: (
     /*open*/
-    ctx[5]
+    ctx[0]
   ) } });
   let key_block = create_key_block4(ctx);
   return {
@@ -36112,7 +36310,7 @@ function create_fragment45(ctx) {
       attr(summary, "class", "tree-item-self is-clickable mod-collapsible text-lg");
       attr(div3, "class", "tree-item-children flex flex-col");
       attr(details, "class", details_class_value = "BC-matrix-view-field BC-matrix-view-field-" + /*field*/
-      ctx[1].label + " tree-item");
+      ctx[2].label + " tree-item");
     },
     m(target, anchor) {
       insert(target, details, anchor);
@@ -36131,7 +36329,7 @@ function create_fragment45(ctx) {
       append(details, div3);
       key_block.m(div3, null);
       details.open = /*open*/
-      ctx[5];
+      ctx[0];
       current = true;
       if (!mounted) {
         dispose = listen(
@@ -36146,21 +36344,21 @@ function create_fragment45(ctx) {
     p(ctx2, [dirty]) {
       const chevronopener_changes = {};
       if (dirty & /*open*/
-      32)
+      1)
         chevronopener_changes.open = /*open*/
-        ctx2[5];
+        ctx2[0];
       chevronopener.$set(chevronopener_changes);
       if ((!current || dirty & /*field*/
-      2) && t1_value !== (t1_value = /*field*/
-      ctx2[1].label + ""))
+      4) && t1_value !== (t1_value = /*field*/
+      ctx2[2].label + ""))
         set_data(t1, t1_value);
       if ((!current || dirty & /*edges*/
-      1) && t3_value !== (t3_value = /*edges*/
-      ctx2[0].length + ""))
+      2) && t3_value !== (t3_value = /*edges*/
+      ctx2[1].length + ""))
         set_data(t3, t3_value);
       if (dirty & /*sort*/
-      16 && safe_not_equal(previous_key, previous_key = /*sort*/
-      ctx2[4])) {
+      32 && safe_not_equal(previous_key, previous_key = /*sort*/
+      ctx2[5])) {
         group_outros();
         transition_out(key_block, 1, 1, noop);
         check_outros();
@@ -36172,14 +36370,14 @@ function create_fragment45(ctx) {
         key_block.p(ctx2, dirty);
       }
       if (!current || dirty & /*field*/
-      2 && details_class_value !== (details_class_value = "BC-matrix-view-field BC-matrix-view-field-" + /*field*/
-      ctx2[1].label + " tree-item")) {
+      4 && details_class_value !== (details_class_value = "BC-matrix-view-field BC-matrix-view-field-" + /*field*/
+      ctx2[2].label + " tree-item")) {
         attr(details, "class", details_class_value);
       }
       if (dirty & /*open*/
-      32) {
+      1) {
         details.open = /*open*/
-        ctx2[5];
+        ctx2[0];
       }
     },
     i(local) {
@@ -36205,37 +36403,39 @@ function create_fragment45(ctx) {
     }
   };
 }
-function instance45($$self, $$props, $$invalidate) {
+function instance46($$self, $$props, $$invalidate) {
+  let { open } = $$props;
   let { edges } = $$props;
   let { field } = $$props;
   let { plugin } = $$props;
   let { show_attributes } = $$props;
   let { show_node_options } = plugin.settings.views.side.matrix;
   let { sort } = $$props;
-  let open = true;
   function details_toggle_handler() {
     open = this.open;
-    $$invalidate(5, open);
+    $$invalidate(0, open);
   }
   $$self.$$set = ($$props2) => {
+    if ("open" in $$props2)
+      $$invalidate(0, open = $$props2.open);
     if ("edges" in $$props2)
-      $$invalidate(0, edges = $$props2.edges);
+      $$invalidate(1, edges = $$props2.edges);
     if ("field" in $$props2)
-      $$invalidate(1, field = $$props2.field);
+      $$invalidate(2, field = $$props2.field);
     if ("plugin" in $$props2)
-      $$invalidate(2, plugin = $$props2.plugin);
+      $$invalidate(3, plugin = $$props2.plugin);
     if ("show_attributes" in $$props2)
-      $$invalidate(3, show_attributes = $$props2.show_attributes);
+      $$invalidate(4, show_attributes = $$props2.show_attributes);
     if ("sort" in $$props2)
-      $$invalidate(4, sort = $$props2.sort);
+      $$invalidate(5, sort = $$props2.sort);
   };
   return [
+    open,
     edges,
     field,
     plugin,
     show_attributes,
     sort,
-    open,
     show_node_options,
     details_toggle_handler
   ];
@@ -36243,12 +36443,13 @@ function instance45($$self, $$props, $$invalidate) {
 var MatrixEdgeField = class extends SvelteComponent {
   constructor(options) {
     super();
-    init(this, options, instance45, create_fragment45, safe_not_equal, {
-      edges: 0,
-      field: 1,
-      plugin: 2,
-      show_attributes: 3,
-      sort: 4
+    init(this, options, instance46, create_fragment46, safe_not_equal, {
+      open: 0,
+      edges: 1,
+      field: 2,
+      plugin: 3,
+      show_attributes: 4,
+      sort: 5
     });
   }
 };
@@ -36257,18 +36458,18 @@ var MatrixEdgeField_default = MatrixEdgeField;
 // src/components/side_views/Matrix.svelte
 function get_each_context10(ctx, list, i) {
   const child_ctx = ctx.slice();
-  child_ctx[11] = list[i];
+  child_ctx[13] = list[i];
   const constants_0 = (
     /*grouped_out_edges*/
-    child_ctx[5][
+    child_ctx[6][
       /*field*/
-      child_ctx[11].label
+      child_ctx[13].label
     ]
   );
-  child_ctx[12] = constants_0;
+  child_ctx[14] = constants_0;
   return child_ctx;
 }
-function create_else_block6(ctx) {
+function create_else_block7(ctx) {
   let p;
   return {
     c() {
@@ -36289,7 +36490,7 @@ function create_else_block6(ctx) {
     }
   };
 }
-function create_if_block12(ctx) {
+function create_if_block13(ctx) {
   let div;
   let current;
   let each_value = ensure_array_like(
@@ -36320,8 +36521,8 @@ function create_if_block12(ctx) {
       current = true;
     },
     p(ctx2, dirty) {
-      if (dirty & /*sort, grouped_out_edges, plugin, show_attributes*/
-      57) {
+      if (dirty & /*sort, grouped_out_edges, plugin, show_attributes, collapse*/
+      121) {
         each_value = ensure_array_like(
           /*plugin*/
           ctx2[0].settings.edge_fields
@@ -36376,15 +36577,15 @@ function create_if_block_15(ctx) {
     props: {
       sort: (
         /*sort*/
-        ctx[4]
+        ctx[5]
       ),
       edges: (
         /*edges*/
-        ctx[12]
+        ctx[14]
       ),
       field: (
         /*field*/
-        ctx[11]
+        ctx[13]
       ),
       plugin: (
         /*plugin*/
@@ -36393,7 +36594,9 @@ function create_if_block_15(ctx) {
       show_attributes: (
         /*show_attributes*/
         ctx[3]
-      )
+      ),
+      open: !/*collapse*/
+      ctx[4]
     }
   });
   return {
@@ -36407,17 +36610,17 @@ function create_if_block_15(ctx) {
     p(ctx2, dirty) {
       const matrixedgefield_changes = {};
       if (dirty & /*sort*/
-      16)
+      32)
         matrixedgefield_changes.sort = /*sort*/
-        ctx2[4];
+        ctx2[5];
       if (dirty & /*grouped_out_edges, plugin*/
-      33)
+      65)
         matrixedgefield_changes.edges = /*edges*/
-        ctx2[12];
+        ctx2[14];
       if (dirty & /*plugin*/
       1)
         matrixedgefield_changes.field = /*field*/
-        ctx2[11];
+        ctx2[13];
       if (dirty & /*plugin*/
       1)
         matrixedgefield_changes.plugin = /*plugin*/
@@ -36426,6 +36629,10 @@ function create_if_block_15(ctx) {
       8)
         matrixedgefield_changes.show_attributes = /*show_attributes*/
         ctx2[3];
+      if (dirty & /*collapse*/
+      16)
+        matrixedgefield_changes.open = !/*collapse*/
+        ctx2[4];
       matrixedgefield.$set(matrixedgefield_changes);
     },
     i(local) {
@@ -36449,7 +36656,7 @@ function create_each_block10(ctx) {
   let current;
   let if_block = (
     /*edges*/
-    ((_a = ctx[12]) == null ? void 0 : _a.length) && create_if_block_15(ctx)
+    ((_a = ctx[14]) == null ? void 0 : _a.length) && create_if_block_15(ctx)
   );
   return {
     c() {
@@ -36467,12 +36674,12 @@ function create_each_block10(ctx) {
       var _a2;
       if (
         /*edges*/
-        (_a2 = ctx2[12]) == null ? void 0 : _a2.length
+        (_a2 = ctx2[14]) == null ? void 0 : _a2.length
       ) {
         if (if_block) {
           if_block.p(ctx2, dirty);
           if (dirty & /*grouped_out_edges, plugin*/
-          33) {
+          65) {
             transition_in(if_block, 1);
           }
         } else {
@@ -36513,12 +36720,12 @@ function create_key_block5(ctx) {
   let if_block;
   let if_block_anchor;
   let current;
-  const if_block_creators = [create_if_block12, create_else_block6];
+  const if_block_creators = [create_if_block13, create_else_block7];
   const if_blocks = [];
   function select_block_type(ctx2, dirty) {
     if (
       /*grouped_out_edges*/
-      ctx2[5]
+      ctx2[6]
     )
       return 0;
     return 1;
@@ -36575,7 +36782,7 @@ function create_key_block5(ctx) {
     }
   };
 }
-function create_fragment46(ctx) {
+function create_fragment47(ctx) {
   let div2;
   let div1;
   let div0;
@@ -36584,15 +36791,18 @@ function create_fragment46(ctx) {
   let edgesortidselector;
   let updating_edge_sort_id;
   let t1;
+  let chevroncollapsebutton;
+  let updating_collapse;
+  let t2;
   let showattributesselectormenu;
   let updating_show_attributes;
-  let t2;
+  let t3;
   let fieldgroupselector;
   let updating_field_group_labels;
-  let t3;
+  let t4;
   let previous_key = (
     /*grouped_out_edges*/
-    ctx[5]
+    ctx[6]
   );
   let current;
   rebuildgraphbutton = new RebuildGraphButton_default({
@@ -36605,7 +36815,7 @@ function create_fragment46(ctx) {
     }
   });
   function edgesortidselector_edge_sort_id_binding(value) {
-    ctx[8](value);
+    ctx[9](value);
   }
   let edgesortidselector_props = {
     cls: "clickable-icon nav-action-button",
@@ -36620,8 +36830,21 @@ function create_fragment46(ctx) {
   }
   edgesortidselector = new EdgeSortIdSelector_default({ props: edgesortidselector_props });
   binding_callbacks.push(() => bind(edgesortidselector, "edge_sort_id", edgesortidselector_edge_sort_id_binding));
+  function chevroncollapsebutton_collapse_binding(value) {
+    ctx[10](value);
+  }
+  let chevroncollapsebutton_props = { cls: "clickable-icon nav-action-button" };
+  if (
+    /*collapse*/
+    ctx[4] !== void 0
+  ) {
+    chevroncollapsebutton_props.collapse = /*collapse*/
+    ctx[4];
+  }
+  chevroncollapsebutton = new ChevronCollapseButton_default({ props: chevroncollapsebutton_props });
+  binding_callbacks.push(() => bind(chevroncollapsebutton, "collapse", chevroncollapsebutton_collapse_binding));
   function showattributesselectormenu_show_attributes_binding(value) {
-    ctx[9](value);
+    ctx[11](value);
   }
   let showattributesselectormenu_props = {
     cls: "clickable-icon nav-action-button",
@@ -36637,7 +36860,7 @@ function create_fragment46(ctx) {
   showattributesselectormenu = new ShowAttributesSelectorMenu_default({ props: showattributesselectormenu_props });
   binding_callbacks.push(() => bind(showattributesselectormenu, "show_attributes", showattributesselectormenu_show_attributes_binding));
   function fieldgroupselector_field_group_labels_binding(value) {
-    ctx[10](value);
+    ctx[12](value);
   }
   let fieldgroupselector_props = {
     cls: "clickable-icon nav-action-button",
@@ -36665,10 +36888,12 @@ function create_fragment46(ctx) {
       t0 = space();
       create_component(edgesortidselector.$$.fragment);
       t1 = space();
-      create_component(showattributesselectormenu.$$.fragment);
+      create_component(chevroncollapsebutton.$$.fragment);
       t2 = space();
-      create_component(fieldgroupselector.$$.fragment);
+      create_component(showattributesselectormenu.$$.fragment);
       t3 = space();
+      create_component(fieldgroupselector.$$.fragment);
+      t4 = space();
       key_block.c();
       attr(div0, "class", "nav-buttons-container");
       attr(div1, "class", "nav-header");
@@ -36682,10 +36907,12 @@ function create_fragment46(ctx) {
       append(div0, t0);
       mount_component(edgesortidselector, div0, null);
       append(div0, t1);
-      mount_component(showattributesselectormenu, div0, null);
+      mount_component(chevroncollapsebutton, div0, null);
       append(div0, t2);
+      mount_component(showattributesselectormenu, div0, null);
+      append(div0, t3);
       mount_component(fieldgroupselector, div0, null);
-      append(div2, t3);
+      append(div2, t4);
       key_block.m(div2, null);
       current = true;
     },
@@ -36705,6 +36932,15 @@ function create_fragment46(ctx) {
         add_flush_callback(() => updating_edge_sort_id = false);
       }
       edgesortidselector.$set(edgesortidselector_changes);
+      const chevroncollapsebutton_changes = {};
+      if (!updating_collapse && dirty & /*collapse*/
+      16) {
+        updating_collapse = true;
+        chevroncollapsebutton_changes.collapse = /*collapse*/
+        ctx2[4];
+        add_flush_callback(() => updating_collapse = false);
+      }
+      chevroncollapsebutton.$set(chevroncollapsebutton_changes);
       const showattributesselectormenu_changes = {};
       if (!updating_show_attributes && dirty & /*show_attributes*/
       8) {
@@ -36728,8 +36964,8 @@ function create_fragment46(ctx) {
       }
       fieldgroupselector.$set(fieldgroupselector_changes);
       if (dirty & /*grouped_out_edges*/
-      32 && safe_not_equal(previous_key, previous_key = /*grouped_out_edges*/
-      ctx2[5])) {
+      64 && safe_not_equal(previous_key, previous_key = /*grouped_out_edges*/
+      ctx2[6])) {
         group_outros();
         transition_out(key_block, 1, 1, noop);
         check_outros();
@@ -36746,6 +36982,7 @@ function create_fragment46(ctx) {
         return;
       transition_in(rebuildgraphbutton.$$.fragment, local);
       transition_in(edgesortidselector.$$.fragment, local);
+      transition_in(chevroncollapsebutton.$$.fragment, local);
       transition_in(showattributesselectormenu.$$.fragment, local);
       transition_in(fieldgroupselector.$$.fragment, local);
       transition_in(key_block);
@@ -36754,6 +36991,7 @@ function create_fragment46(ctx) {
     o(local) {
       transition_out(rebuildgraphbutton.$$.fragment, local);
       transition_out(edgesortidselector.$$.fragment, local);
+      transition_out(chevroncollapsebutton.$$.fragment, local);
       transition_out(showattributesselectormenu.$$.fragment, local);
       transition_out(fieldgroupselector.$$.fragment, local);
       transition_out(key_block);
@@ -36765,23 +37003,28 @@ function create_fragment46(ctx) {
       }
       destroy_component(rebuildgraphbutton);
       destroy_component(edgesortidselector);
+      destroy_component(chevroncollapsebutton);
       destroy_component(showattributesselectormenu);
       destroy_component(fieldgroupselector);
       key_block.d(detaching);
     }
   };
 }
-function instance46($$self, $$props, $$invalidate) {
+function instance47($$self, $$props, $$invalidate) {
   let edge_field_labels;
   let grouped_out_edges;
   let sort;
   let $active_file_store;
-  component_subscribe($$self, active_file_store, ($$value) => $$invalidate(7, $active_file_store = $$value));
+  component_subscribe($$self, active_file_store, ($$value) => $$invalidate(8, $active_file_store = $$value));
   let { plugin } = $$props;
-  let { edge_sort_id, field_group_labels, show_attributes } = plugin.settings.views.side.matrix;
+  let { edge_sort_id, field_group_labels, show_attributes, collapse } = plugin.settings.views.side.matrix;
   function edgesortidselector_edge_sort_id_binding(value) {
     edge_sort_id = value;
     $$invalidate(1, edge_sort_id);
+  }
+  function chevroncollapsebutton_collapse_binding(value) {
+    collapse = value;
+    $$invalidate(4, collapse);
   }
   function showattributesselectormenu_show_attributes_binding(value) {
     show_attributes = value;
@@ -36799,19 +37042,19 @@ function instance46($$self, $$props, $$invalidate) {
     if ($$self.$$.dirty & /*plugin, field_group_labels*/
     5) {
       $:
-        $$invalidate(6, edge_field_labels = resolve_field_group_labels(plugin.settings.edge_field_groups, field_group_labels));
+        $$invalidate(7, edge_field_labels = resolve_field_group_labels(plugin.settings.edge_field_groups, field_group_labels));
     }
     if ($$self.$$.dirty & /*$active_file_store, plugin, edge_field_labels*/
-    193) {
+    385) {
       $:
-        $$invalidate(5, grouped_out_edges = $active_file_store && // Even tho we ensure the graph is built before the views are registered,
+        $$invalidate(6, grouped_out_edges = $active_file_store && // Even tho we ensure the graph is built before the views are registered,
         // Existing views still try render before the graph is built.
         plugin.graph.hasNode($active_file_store.path) ? group_by(plugin.graph.get_out_edges($active_file_store.path).filter((e) => has_edge_attrs(e, { $or_fields: edge_field_labels })), (e) => e.attr.field) : null);
     }
     if ($$self.$$.dirty & /*edge_sort_id, plugin*/
     3) {
       $:
-        $$invalidate(4, sort = get_edge_sorter(edge_sort_id, plugin.graph));
+        $$invalidate(5, sort = get_edge_sorter(edge_sort_id, plugin.graph));
     }
   };
   return [
@@ -36819,11 +37062,13 @@ function instance46($$self, $$props, $$invalidate) {
     edge_sort_id,
     field_group_labels,
     show_attributes,
+    collapse,
     sort,
     grouped_out_edges,
     edge_field_labels,
     $active_file_store,
     edgesortidselector_edge_sort_id_binding,
+    chevroncollapsebutton_collapse_binding,
     showattributesselectormenu_show_attributes_binding,
     fieldgroupselector_field_group_labels_binding
   ];
@@ -36831,7 +37076,7 @@ function instance46($$self, $$props, $$invalidate) {
 var Matrix = class extends SvelteComponent {
   constructor(options) {
     super();
-    init(this, options, instance46, create_fragment46, safe_not_equal, { plugin: 0 });
+    init(this, options, instance47, create_fragment47, safe_not_equal, { plugin: 0 });
   }
 };
 var Matrix_default = Matrix;
@@ -36904,7 +37149,7 @@ var BCAPI = class {
 var import_obsidian27 = require("obsidian");
 
 // src/components/codeblocks/CodeblockErrors.svelte
-function create_if_block13(ctx) {
+function create_if_block14(ctx) {
   let p0;
   let t1;
   let p1;
@@ -37018,12 +37263,12 @@ function create_if_block13(ctx) {
     }
   };
 }
-function create_fragment47(ctx) {
+function create_fragment48(ctx) {
   let if_block_anchor;
   let current;
   let if_block = (
     /*errors*/
-    ctx[1].length && create_if_block13(ctx)
+    ctx[1].length && create_if_block14(ctx)
   );
   return {
     c() {
@@ -37049,7 +37294,7 @@ function create_fragment47(ctx) {
             transition_in(if_block, 1);
           }
         } else {
-          if_block = create_if_block13(ctx2);
+          if_block = create_if_block14(ctx2);
           if_block.c();
           transition_in(if_block, 1);
           if_block.m(if_block_anchor.parentNode, if_block_anchor);
@@ -37081,7 +37326,7 @@ function create_fragment47(ctx) {
     }
   };
 }
-function instance47($$self, $$props, $$invalidate) {
+function instance48($$self, $$props, $$invalidate) {
   let { plugin } = $$props;
   let { errors } = $$props;
   const markdown = errors.map((e) => `- **\`${e.path}\`**: ${e.message}`).join("\n");
@@ -37096,7 +37341,7 @@ function instance47($$self, $$props, $$invalidate) {
 var CodeblockErrors = class extends SvelteComponent {
   constructor(options) {
     super();
-    init(this, options, instance47, create_fragment47, safe_not_equal, { plugin: 0, errors: 1 });
+    init(this, options, instance48, create_fragment48, safe_not_equal, { plugin: 0, errors: 1 });
   }
 };
 var CodeblockErrors_default = CodeblockErrors;
@@ -37124,7 +37369,7 @@ var Distance = {
 var is_between = (value, min, max) => value >= min && value <= max;
 
 // src/components/button/CopyToClipboardButton.svelte
-function create_else_block7(ctx) {
+function create_else_block8(ctx) {
   let clipboardicon;
   let current;
   clipboardicon = new clipboard_default({ props: { size: ICON_SIZE } });
@@ -37151,7 +37396,7 @@ function create_else_block7(ctx) {
     }
   };
 }
-function create_if_block14(ctx) {
+function create_if_block15(ctx) {
   let checkicon;
   let current;
   checkicon = new check_default({ props: { size: ICON_SIZE } });
@@ -37178,7 +37423,7 @@ function create_if_block14(ctx) {
     }
   };
 }
-function create_fragment48(ctx) {
+function create_fragment49(ctx) {
   let button;
   let current_block_type_index;
   let if_block;
@@ -37186,7 +37431,7 @@ function create_fragment48(ctx) {
   let current;
   let mounted;
   let dispose;
-  const if_block_creators = [create_if_block14, create_else_block7];
+  const if_block_creators = [create_if_block15, create_else_block8];
   const if_blocks = [];
   function select_block_type(ctx2, dirty) {
     if (
@@ -37284,7 +37529,7 @@ function create_fragment48(ctx) {
     }
   };
 }
-function instance48($$self, $$props, $$invalidate) {
+function instance49($$self, $$props, $$invalidate) {
   let { cls = "" } = $$props;
   let { text: text2 } = $$props;
   let { aria_label = "Copy to Clipboard" } = $$props;
@@ -37310,7 +37555,7 @@ function instance48($$self, $$props, $$invalidate) {
 var CopyToClipboardButton = class extends SvelteComponent {
   constructor(options) {
     super();
-    init(this, options, instance48, create_fragment48, safe_not_equal, {
+    init(this, options, instance49, create_fragment49, safe_not_equal, {
       cls: 0,
       text: 1,
       aria_label: 2,
@@ -37351,7 +37596,7 @@ function create_if_block_16(ctx) {
     }
   };
 }
-function create_else_block8(ctx) {
+function create_else_block9(ctx) {
   let p;
   return {
     c() {
@@ -37372,7 +37617,7 @@ function create_else_block8(ctx) {
     }
   };
 }
-function create_if_block15(ctx) {
+function create_if_block16(ctx) {
   let div1;
   let div0;
   let copytoclipboardbutton;
@@ -37518,7 +37763,7 @@ function create_if_block15(ctx) {
     }
   };
 }
-function create_fragment49(ctx) {
+function create_fragment50(ctx) {
   let div;
   let codeblockerrors;
   let t0;
@@ -37542,7 +37787,7 @@ function create_fragment49(ctx) {
     /*options*/
     ctx[1].title && create_if_block_16(ctx)
   );
-  const if_block_creators = [create_if_block15, create_else_block8];
+  const if_block_creators = [create_if_block16, create_else_block9];
   const if_blocks = [];
   function select_block_type(ctx2, dirty) {
     if (
@@ -37645,7 +37890,7 @@ function create_fragment49(ctx) {
     }
   };
 }
-function instance49($$self, $$props, $$invalidate) {
+function instance50($$self, $$props, $$invalidate) {
   let source_path;
   let edges;
   let mermaid;
@@ -37756,7 +38001,7 @@ function instance49($$self, $$props, $$invalidate) {
 var CodeblockMermaid = class extends SvelteComponent {
   constructor(options) {
     super();
-    init(this, options, instance49, create_fragment49, safe_not_equal, {
+    init(this, options, instance50, create_fragment50, safe_not_equal, {
       plugin: 0,
       options: 1,
       errors: 2,
@@ -37879,7 +38124,7 @@ function create_if_block_17(ctx) {
     }
   };
 }
-function create_if_block16(ctx) {
+function create_if_block17(ctx) {
   let div;
   let nestededgelist;
   let current;
@@ -38000,7 +38245,7 @@ function create_each_block11(ctx) {
   );
   let if_block2 = (
     /*item*/
-    ctx[9].children.length && create_if_block16(ctx)
+    ctx[9].children.length && create_if_block17(ctx)
   );
   function details_toggle_handler() {
     ctx[8].call(
@@ -38129,7 +38374,7 @@ function create_each_block11(ctx) {
             transition_in(if_block2, 1);
           }
         } else {
-          if_block2 = create_if_block16(ctx);
+          if_block2 = create_if_block17(ctx);
           if_block2.c();
           transition_in(if_block2, 1);
           if_block2.m(details, t3);
@@ -38182,7 +38427,7 @@ function create_each_block11(ctx) {
     }
   };
 }
-function create_fragment50(ctx) {
+function create_fragment51(ctx) {
   let each_1_anchor;
   let current;
   let each_value = ensure_array_like(
@@ -38268,7 +38513,7 @@ function create_fragment50(ctx) {
     }
   };
 }
-function instance50($$self, $$props, $$invalidate) {
+function instance51($$self, $$props, $$invalidate) {
   let { plugin } = $$props;
   let { tree } = $$props;
   let { open_signal } = $$props;
@@ -38323,7 +38568,7 @@ function instance50($$self, $$props, $$invalidate) {
 var NestedEdgeList = class extends SvelteComponent {
   constructor(options) {
     super();
-    init(this, options, instance50, create_fragment50, safe_not_equal, {
+    init(this, options, instance51, create_fragment51, safe_not_equal, {
       plugin: 0,
       tree: 1,
       open_signal: 6,
@@ -38366,7 +38611,7 @@ function create_if_block_18(ctx) {
     }
   };
 }
-function create_else_block9(ctx) {
+function create_else_block10(ctx) {
   let p;
   return {
     c() {
@@ -38387,7 +38632,7 @@ function create_else_block9(ctx) {
     }
   };
 }
-function create_if_block17(ctx) {
+function create_if_block18(ctx) {
   var _a;
   let div2;
   let div0;
@@ -38518,7 +38763,7 @@ function create_if_block17(ctx) {
     }
   };
 }
-function create_fragment51(ctx) {
+function create_fragment52(ctx) {
   let div;
   let codeblockerrors;
   let t0;
@@ -38542,7 +38787,7 @@ function create_fragment51(ctx) {
     /*options*/
     ctx[1].title && create_if_block_18(ctx)
   );
-  const if_block_creators = [create_if_block17, create_else_block9];
+  const if_block_creators = [create_if_block18, create_else_block10];
   const if_blocks = [];
   function select_block_type(ctx2, dirty) {
     if (
@@ -38645,7 +38890,7 @@ function create_fragment51(ctx) {
     }
   };
 }
-function instance51($$self, $$props, $$invalidate) {
+function instance52($$self, $$props, $$invalidate) {
   let source_path;
   let $active_file_store;
   component_subscribe($$self, active_file_store, ($$value) => $$invalidate(8, $active_file_store = $$value));
@@ -38709,7 +38954,7 @@ function instance51($$self, $$props, $$invalidate) {
 var CodeblockTree = class extends SvelteComponent {
   constructor(options) {
     super();
-    init(this, options, instance51, create_fragment51, safe_not_equal, {
+    init(this, options, instance52, create_fragment52, safe_not_equal, {
       plugin: 0,
       options: 1,
       errors: 2,
@@ -38807,212 +39052,183 @@ var CodeblockMDRC = class extends import_obsidian27.MarkdownRenderChild {
   }
 };
 
-// src/commands/freeze_edges/index.ts
-var import_obsidian29 = require("obsidian");
+// src/commands/init.ts
+var import_obsidian34 = require("obsidian");
 
-// src/utils/drop_crumb.ts
-var import_obsidian28 = require("obsidian");
-var linkify_edge = (plugin, source_id, target_id, target_aliases) => {
-  const target_file = plugin.app.vault.getFileByPath(target_id);
-  if (!target_file) {
-    return `[[${Paths.drop_ext(target_id)}]]`;
-  } else {
-    return plugin.app.fileManager.generateMarkdownLink(
-      target_file,
-      source_id,
-      void 0,
-      target_aliases == null ? void 0 : target_aliases.at(0)
-    );
-  }
-};
-var drop_crumbs = async (plugin, destination_file, crumbs, options) => {
-  const links_by_field = group_projection(
-    group_by(crumbs, (e) => e.attr.field),
-    (edges) => edges.map(
-      (e) => linkify_edge(
-        plugin,
-        e.source_id,
-        e.target_id,
-        e.target_attr.aliases
-      )
-    )
-  );
-  switch (options.destination) {
-    case "frontmatter": {
-      await plugin.app.fileManager.processFrontMatter(
-        destination_file,
-        (frontmatter) => {
-          Object.keys(links_by_field).forEach((field) => {
-            const links = links_by_field[field];
-            const existing = frontmatter[field];
-            if (existing) {
-              frontmatter[field] = remove_duplicates(
-                ensure_is_array(existing).concat(links)
-              );
-            } else {
-              frontmatter[field] = links;
-            }
-          });
-          log.debug(
-            "drop_crumbs > processed frontmatter",
-            frontmatter
-          );
-        }
+// src/components/input/SimpleInput.svelte
+function create_if_block19(ctx) {
+  let label_1;
+  let t;
+  return {
+    c() {
+      label_1 = element("label");
+      t = text(
+        /*label*/
+        ctx[0]
       );
-      break;
-    }
-    case "dataview-inline": {
-      const dataview_fields = Object.keys(links_by_field).map((field) => {
-        const links = links_by_field[field];
-        return `${field}:: ${links.join(", ")}`;
-      });
-      await plugin.app.vault.process(destination_file, (content) => {
-        content += "\n\n" + dataview_fields.join("\n");
-        return content;
-      });
-      break;
-    }
-    case "none": {
-      break;
-    }
-  }
-};
-
-// src/commands/freeze_edges/index.ts
-var freeze_implied_edges_to_note = async (plugin, source_file, options) => {
-  const implied_edges = plugin.graph.get_out_edges(source_file.path).filter(
-    (e) => (
-      // Don't freeze a note to itself (self_is_sibling)
-      !is_self_loop(e) && !e.attr.explicit && // If field === null, we don't have an opposite field to freeze to
-      e.attr.field !== null
-    )
-  );
-  await drop_crumbs(plugin, source_file, implied_edges, options);
-};
-
-// src/commands/jump/index.ts
-var import_obsidian30 = require("obsidian");
-var jump_to_neighbour = async (plugin, options) => {
-  const active_file = get_store_value(active_file_store);
-  if (!active_file)
-    return;
-  const matches = plugin.graph.get_out_edges(active_file.path).filter(
-    (e) => has_edge_attrs(e, options.attr) && e.target_id !== active_file.path
-  );
-  if (!matches.length) {
-    new import_obsidian30.Notice(
-      `No matches found with attributes: ${url_search_params(options.attr)}`
-    );
-    return;
-  } else {
-    await plugin.app.workspace.openLinkText(
-      matches[0].target_id,
-      active_file.path
-    );
-  }
-};
-
-// src/commands/stats/index.ts
-var get_graph_stats = (graph, data) => {
-  var _a, _b;
-  const stats = {
-    nodes: {
-      resolved: {}
+      attr(label_1, "for", "input");
     },
-    edges: {
-      round: {},
-      field: {},
-      group: {},
-      source: {},
-      explicit: {},
-      implied_kind: {}
+    m(target, anchor) {
+      insert(target, label_1, anchor);
+      append(label_1, t);
+    },
+    p(ctx2, dirty) {
+      if (dirty & /*label*/
+      1)
+        set_data(
+          t,
+          /*label*/
+          ctx2[0]
+        );
+    },
+    d(detaching) {
+      if (detaching) {
+        detach(label_1);
+      }
     }
   };
-  for (const node of graph.nodeEntries()) {
-    const resolved = String(node.attributes.resolved);
-    stats.nodes.resolved[resolved] = (stats.nodes.resolved[resolved] || 0) + 1;
-  }
-  for (const { attributes: attr2 } of graph.edgeEntries()) {
-    stats.edges.field[(_a = attr2.field) != null ? _a : "null"] = (stats.edges.field[(_b = attr2.field) != null ? _b : "null"] || 0) + 1;
-    data.groups.forEach((group) => {
-      if (group.fields.includes(attr2.field)) {
-        stats.edges.group[group.label] = (stats.edges.group[group.label] || 0) + 1;
+}
+function create_fragment53(ctx) {
+  let div;
+  let t0;
+  let input;
+  let t1;
+  let button;
+  let t2;
+  let button_disabled_value;
+  let mounted;
+  let dispose;
+  let if_block = (
+    /*label*/
+    ctx[0] && create_if_block19(ctx)
+  );
+  return {
+    c() {
+      div = element("div");
+      if (if_block)
+        if_block.c();
+      t0 = space();
+      input = element("input");
+      t1 = space();
+      button = element("button");
+      t2 = text("Submit");
+      attr(input, "name", "input");
+      attr(input, "type", "text");
+      button.disabled = button_disabled_value = /*disabled_cb*/
+      ctx[1](
+        /*value*/
+        ctx[2]
+      );
+      attr(div, "class", "flex flex-col gap-1");
+    },
+    m(target, anchor) {
+      insert(target, div, anchor);
+      if (if_block)
+        if_block.m(div, null);
+      append(div, t0);
+      append(div, input);
+      set_input_value(
+        input,
+        /*value*/
+        ctx[2]
+      );
+      append(div, t1);
+      append(div, button);
+      append(button, t2);
+      if (!mounted) {
+        dispose = [
+          listen(
+            input,
+            "input",
+            /*input_input_handler*/
+            ctx[4]
+          ),
+          listen(
+            button,
+            "click",
+            /*click_handler*/
+            ctx[5]
+          )
+        ];
+        mounted = true;
       }
-    });
-    const explicit = String(attr2.explicit);
-    stats.edges.explicit[explicit] = (stats.edges.explicit[explicit] || 0) + 1;
-    if (attr2.explicit) {
-      stats.edges.source[attr2.source] = (stats.edges.source[attr2.source] || 0) + 1;
-    } else {
-      stats.edges.implied_kind[attr2.implied_kind] = (stats.edges.implied_kind[attr2.implied_kind] || 0) + 1;
-      const round = String(attr2.round);
-      stats.edges.round[round] = (stats.edges.round[round] || 0) + 1;
-    }
-  }
-  return stats;
-};
-
-// src/commands/thread/index.ts
-var import_obsidian31 = require("obsidian");
-var thread = async (plugin, attr2, options) => {
-  var _a, _b;
-  const active_view = plugin.app.workspace.getActiveViewOfType(import_obsidian31.MarkdownView);
-  if (!active_view)
-    return;
-  const source_file = active_view.file;
-  if (!source_file)
-    return;
-  const template_data = {
-    attr: attr2,
-    source: {
-      path: source_file.path,
-      folder: (_b = (_a = source_file.parent) == null ? void 0 : _a.path) != null ? _b : "",
-      basename: source_file.basename
+    },
+    p(ctx2, [dirty]) {
+      if (
+        /*label*/
+        ctx2[0]
+      ) {
+        if (if_block) {
+          if_block.p(ctx2, dirty);
+        } else {
+          if_block = create_if_block19(ctx2);
+          if_block.c();
+          if_block.m(div, t0);
+        }
+      } else if (if_block) {
+        if_block.d(1);
+        if_block = null;
+      }
+      if (dirty & /*value*/
+      4 && input.value !== /*value*/
+      ctx2[2]) {
+        set_input_value(
+          input,
+          /*value*/
+          ctx2[2]
+        );
+      }
+      if (dirty & /*disabled_cb, value*/
+      6 && button_disabled_value !== (button_disabled_value = /*disabled_cb*/
+      ctx2[1](
+        /*value*/
+        ctx2[2]
+      ))) {
+        button.disabled = button_disabled_value;
+      }
+    },
+    i: noop,
+    o: noop,
+    d(detaching) {
+      if (detaching) {
+        detach(div);
+      }
+      if (if_block)
+        if_block.d();
+      mounted = false;
+      run_all(dispose);
     }
   };
-  log.info("template_data", template_data);
-  const target_path = Paths.normalise(
-    Paths.ensure_ext(
-      resolve_templates(options.target_path_template, template_data),
-      "md"
-    )
-  );
-  log.debug("thread > target_path", target_path);
-  let target_file = null;
-  try {
-    target_file = await plugin.app.vault.create(target_path, "");
-  } catch (error) {
-    const msg = `Error creating file "${target_path}". ${error instanceof Error ? error.message : error}`;
-    new import_obsidian31.Notice(msg);
-    log.error(msg);
-    return;
+}
+function instance53($$self, $$props, $$invalidate) {
+  let { label = "" } = $$props;
+  let { disabled_cb = (_value) => false } = $$props;
+  let value = "";
+  const dispatch = createEventDispatcher();
+  function input_input_handler() {
+    value = this.value;
+    $$invalidate(2, value);
   }
-  await drop_crumbs(
-    plugin,
-    source_file,
-    [
-      {
-        attr: attr2,
-        target_id: target_path,
-        source_id: source_file.path,
-        target_attr: { aliases: [] }
-      }
-    ],
-    options
-  );
-  await Promise.all([
-    // Let the cache update so that the refresh sees the new file
-    // NOTE: I half-completed a less-flaky solution by listening to app.metadataCache.on("changed", ...)
-    // But this only works if Dataview isn't enabled, and I couldn't find the correct event to listen to for Dataview
-    sleep(500),
-    active_view.leaf.openFile(target_file)
-  ]);
-  await plugin.refresh();
+  const click_handler = () => dispatch("submit", value);
+  $$self.$$set = ($$props2) => {
+    if ("label" in $$props2)
+      $$invalidate(0, label = $$props2.label);
+    if ("disabled_cb" in $$props2)
+      $$invalidate(1, disabled_cb = $$props2.disabled_cb);
+  };
+  return [label, disabled_cb, value, dispatch, input_input_handler, click_handler];
+}
+var SimpleInput = class extends SvelteComponent {
+  constructor(options) {
+    super();
+    init(this, options, instance53, create_fragment53, safe_not_equal, { label: 0, disabled_cb: 1 });
+  }
 };
+var SimpleInput_default = SimpleInput;
 
 // src/modals/CreateListIndexModal.ts
-var import_obsidian32 = require("obsidian");
-var CreateListIndexModal = class extends import_obsidian32.Modal {
+var import_obsidian28 = require("obsidian");
+var CreateListIndexModal = class extends import_obsidian28.Modal {
   constructor(app, plugin) {
     super(app);
     this.active_file = get_store_value(active_file_store);
@@ -39021,7 +39237,7 @@ var CreateListIndexModal = class extends import_obsidian32.Modal {
   }
   onOpen() {
     if (!this.active_file) {
-      new import_obsidian32.Notice("No active file");
+      new import_obsidian28.Notice("No active file");
       return this.close();
     }
     const { contentEl, plugin } = this;
@@ -39079,7 +39295,7 @@ var CreateListIndexModal = class extends import_obsidian32.Modal {
       },
       { save_and_refresh: false }
     );
-    new import_obsidian32.Setting(contentEl).addButton(
+    new import_obsidian28.Setting(contentEl).addButton(
       (btn) => btn.setButtonText("Build & Copy to Clipboard").setCta().onClick(async () => {
         log.debug("build_list_index options", this.options);
         const list_index = ListIndex.build(
@@ -39089,9 +39305,9 @@ var CreateListIndexModal = class extends import_obsidian32.Modal {
         );
         if (list_index) {
           await navigator.clipboard.writeText(list_index);
-          new import_obsidian32.Notice("List index copied to clipboard");
+          new import_obsidian28.Notice("List index copied to clipboard");
         } else {
-          new import_obsidian32.Notice("No list items to copy");
+          new import_obsidian28.Notice("No list items to copy");
         }
         this.close();
       })
@@ -39100,6 +39316,362 @@ var CreateListIndexModal = class extends import_obsidian32.Modal {
   onClose() {
     this.contentEl.empty();
   }
+};
+
+// src/modals/GenericModal.ts
+var import_obsidian29 = require("obsidian");
+var GenericModal = class extends import_obsidian29.Modal {
+  constructor(app, cb) {
+    super(app);
+    this.cb = cb;
+  }
+  onOpen() {
+    this.cb(this);
+  }
+  onClose() {
+    this.contentEl.empty();
+  }
+};
+
+// src/commands/freeze_edges/index.ts
+var import_obsidian31 = require("obsidian");
+
+// src/utils/drop_crumb.ts
+var import_obsidian30 = require("obsidian");
+var linkify_edge = (plugin, source_id, target_id, target_aliases) => {
+  const target_file = plugin.app.vault.getFileByPath(target_id);
+  if (!target_file) {
+    return `[[${Paths.drop_ext(target_id)}]]`;
+  } else {
+    return plugin.app.fileManager.generateMarkdownLink(
+      target_file,
+      source_id,
+      void 0,
+      target_aliases == null ? void 0 : target_aliases.at(0)
+    );
+  }
+};
+var drop_crumbs = async (plugin, destination_file, crumbs, options) => {
+  var _a, _b;
+  if (!crumbs.length)
+    return;
+  const links_by_field = group_projection(
+    group_by(crumbs, (e) => e.attr.field),
+    (edges) => edges.map(
+      (e) => linkify_edge(
+        plugin,
+        e.source_id,
+        e.target_id,
+        e.target_attr.aliases
+      )
+    )
+  );
+  switch (options.destination) {
+    case "frontmatter": {
+      let mutated = false;
+      const frontmatter = (_b = (_a = plugin.app.metadataCache.getFileCache(destination_file)) == null ? void 0 : _a.frontmatter) != null ? _b : {};
+      Object.entries(links_by_field).forEach(([field, links]) => {
+        if (!(links == null ? void 0 : links.length))
+          return;
+        const existing = frontmatter[field];
+        if (existing) {
+          const existing_array = ensure_is_array(existing);
+          const new_links = remove_duplicates(
+            existing_array.concat(links)
+          );
+          if (new_links.length !== existing_array.length) {
+            mutated = true;
+            frontmatter[field] = new_links;
+          }
+        } else {
+          mutated = true;
+          frontmatter[field] = links;
+        }
+      });
+      if (mutated) {
+        await plugin.app.fileManager.processFrontMatter(
+          destination_file,
+          (old_frontmatter) => {
+            const new_frontmatter = Object.assign(
+              old_frontmatter,
+              frontmatter
+            );
+            log.debug(
+              "drop_crumbs > processed frontmatter",
+              new_frontmatter
+            );
+          }
+        );
+      }
+      break;
+    }
+    case "dataview-inline": {
+      const dataview_fields = Object.entries(links_by_field).map(([field, links]) => {
+        if (!(links == null ? void 0 : links.length))
+          return "";
+        else
+          return `${field}:: ${links.join(", ")}`;
+      }).filter(Boolean);
+      await plugin.app.vault.process(destination_file, (content) => {
+        content += "\n\n" + dataview_fields.join("\n");
+        return content;
+      });
+      break;
+    }
+    case "none": {
+      break;
+    }
+  }
+};
+
+// src/commands/freeze_edges/index.ts
+var freeze_implied_edges_to_note = async (plugin, source_file, options) => {
+  const implied_edges = plugin.graph.get_out_edges(source_file.path).filter(
+    (e) => (
+      // Don't freeze a note to itself (self_is_sibling)
+      !is_self_loop(e) && !e.attr.explicit && // If field === null, we don't have an opposite field to freeze to
+      e.attr.field !== null
+    )
+  );
+  await drop_crumbs(plugin, source_file, implied_edges, options);
+};
+
+// src/commands/jump/index.ts
+var import_obsidian32 = require("obsidian");
+var jump_to_neighbour = async (plugin, options) => {
+  const active_file = get_store_value(active_file_store);
+  if (!active_file)
+    return;
+  const matches = plugin.graph.get_out_edges(active_file.path).filter(
+    (e) => has_edge_attrs(e, options.attr) && e.target_id !== active_file.path
+  );
+  if (!matches.length) {
+    new import_obsidian32.Notice(
+      `No matches found with attributes: ${url_search_params(options.attr)}`
+    );
+    return;
+  } else {
+    await plugin.app.workspace.openLinkText(
+      matches[0].target_id,
+      active_file.path
+    );
+  }
+};
+
+// src/commands/stats/index.ts
+var get_graph_stats = (graph, data) => {
+  var _a, _b;
+  const stats = {
+    nodes: {
+      resolved: {}
+    },
+    edges: {
+      round: {},
+      field: {},
+      group: {},
+      source: {},
+      explicit: {},
+      implied_kind: {}
+    }
+  };
+  for (const node of graph.nodeEntries()) {
+    const resolved = String(node.attributes.resolved);
+    stats.nodes.resolved[resolved] = (stats.nodes.resolved[resolved] || 0) + 1;
+  }
+  for (const { attributes: attr2 } of graph.edgeEntries()) {
+    stats.edges.field[(_a = attr2.field) != null ? _a : "null"] = (stats.edges.field[(_b = attr2.field) != null ? _b : "null"] || 0) + 1;
+    data.groups.forEach((group) => {
+      if (group.fields.includes(attr2.field)) {
+        stats.edges.group[group.label] = (stats.edges.group[group.label] || 0) + 1;
+      }
+    });
+    const explicit = String(attr2.explicit);
+    stats.edges.explicit[explicit] = (stats.edges.explicit[explicit] || 0) + 1;
+    if (attr2.explicit) {
+      stats.edges.source[attr2.source] = (stats.edges.source[attr2.source] || 0) + 1;
+    } else {
+      stats.edges.implied_kind[attr2.implied_kind] = (stats.edges.implied_kind[attr2.implied_kind] || 0) + 1;
+      const round = String(attr2.round);
+      stats.edges.round[round] = (stats.edges.round[round] || 0) + 1;
+    }
+  }
+  return stats;
+};
+
+// src/commands/thread/index.ts
+var import_obsidian33 = require("obsidian");
+var thread = async (plugin, attr2, options) => {
+  var _a, _b;
+  const active_view = plugin.app.workspace.getActiveViewOfType(import_obsidian33.MarkdownView);
+  if (!active_view)
+    return;
+  const source_file = active_view.file;
+  if (!source_file)
+    return;
+  const template_data = {
+    attr: attr2,
+    source: {
+      path: source_file.path,
+      folder: (_b = (_a = source_file.parent) == null ? void 0 : _a.path) != null ? _b : "",
+      basename: source_file.basename
+    }
+  };
+  log.info("template_data", template_data);
+  const target_path = Paths.normalise(
+    Paths.ensure_ext(
+      resolve_templates(options.target_path_template, template_data),
+      "md"
+    )
+  );
+  log.debug("thread > target_path", target_path);
+  let target_file = null;
+  try {
+    target_file = await plugin.app.vault.create(target_path, "");
+  } catch (error) {
+    const msg = `Error creating file "${target_path}". ${error instanceof Error ? error.message : error}`;
+    new import_obsidian33.Notice(msg);
+    log.error(msg);
+    return;
+  }
+  await drop_crumbs(
+    plugin,
+    source_file,
+    [
+      {
+        attr: attr2,
+        target_id: target_path,
+        source_id: source_file.path,
+        target_attr: { aliases: [] }
+      }
+    ],
+    options
+  );
+  await Promise.all([
+    // Let the cache update so that the refresh sees the new file
+    // NOTE: I half-completed a less-flaky solution by listening to app.metadataCache.on("changed", ...)
+    // But this only works if Dataview isn't enabled, and I couldn't find the correct event to listen to for Dataview
+    sleep(500),
+    active_view.leaf.openFile(target_file)
+  ]);
+  await plugin.refresh();
+};
+
+// src/commands/init.ts
+var init_all_commands = (plugin) => {
+  plugin.addCommand({
+    id: "breadcrumbs:rebuild-graph",
+    name: "Rebuild graph",
+    callback: async () => await plugin.refresh()
+  });
+  Object.keys(VIEW_IDS).forEach((view_id) => {
+    plugin.addCommand({
+      id: `breadcrumbs:open-${view_id}-view`,
+      name: `Open ${view_id} view`,
+      callback: () => plugin.activateView(VIEW_IDS[view_id])
+    });
+  });
+  plugin.addCommand({
+    id: "breadcrumbs:create-list-index",
+    name: "Create list index",
+    callback: () => {
+      new CreateListIndexModal(plugin.app, plugin).open();
+    }
+  });
+  plugin.addCommand({
+    id: "breadcrumbs:graph-stats",
+    name: "Show/Copy graph stats",
+    callback: async () => {
+      const stats = get_graph_stats(plugin.graph, {
+        groups: plugin.settings.edge_field_groups
+      });
+      log.feat("Graph stats >", stats);
+      await navigator.clipboard.writeText(JSON.stringify(stats, null, 2));
+      new import_obsidian34.Notice(
+        "Graph stats printed to console and copied to clipboard"
+      );
+    }
+  });
+  plugin.addCommand({
+    id: "breadcrumbs:freeze-implied-edges-to-note",
+    name: "Freeze implied edges to note",
+    callback: async () => {
+      const active_file = get_store_value(active_file_store);
+      if (!active_file)
+        return;
+      await freeze_implied_edges_to_note(
+        plugin,
+        active_file,
+        plugin.settings.commands.freeze_implied_edges.default_options
+      );
+      new import_obsidian34.Notice("Implied edges frozen to note");
+    }
+  });
+  plugin.addCommand({
+    id: "breadcrumbs:freeze-implied-edges-to-vault",
+    name: "Freeze implied edges to all notes in vault",
+    callback: async () => {
+      if (!confirm(
+        "Are you sure you want to freeze implied edges to all notes in vault? This will write to all notes that have outgoing implied edges."
+      )) {
+        return new import_obsidian34.Notice("Command cancelled");
+      }
+      const PROMPT_TARGET = "FREEZE TO VAULT";
+      new GenericModal(plugin.app, (modal) => {
+        new SimpleInput_default({
+          target: modal.contentEl,
+          props: {
+            label: `Type '${PROMPT_TARGET}' to confirm`,
+            disabled_cb: (value) => value !== PROMPT_TARGET
+          }
+        }).$on("submit", async (e) => {
+          if (e.detail !== PROMPT_TARGET) {
+            new import_obsidian34.Notice("Command cancelled");
+          } else {
+            const timer = new Timer();
+            const notice = new import_obsidian34.Notice(
+              "Freezing implied edges to all notes in vault..."
+            );
+            await Promise.all(
+              plugin.app.vault.getMarkdownFiles().map(
+                (file) => freeze_implied_edges_to_note(
+                  plugin,
+                  file,
+                  plugin.settings.commands.freeze_implied_edges.default_options
+                )
+              )
+            );
+            log.debug(
+              `freeze-implied-edges-to-vault > took ${timer.elapsed_str()}ms`
+            );
+            notice.setMessage(
+              `Implied edges frozen to all notes in ${timer.elapsed_str()}ms`
+            );
+          }
+          modal.close();
+        });
+      }).open();
+    }
+  });
+  plugin.settings.edge_field_groups.forEach((group) => {
+    plugin.addCommand({
+      id: `breadcrumbs:jump-to-first-neighbour-group:${group.label}`,
+      name: `Jump to first neighbour by group:${group.label}`,
+      callback: () => jump_to_neighbour(plugin, {
+        attr: { $or_fields: group.fields }
+      })
+    });
+  });
+  plugin.settings.edge_fields.forEach(({ label }) => {
+    plugin.addCommand({
+      id: `breadcrumbs:thread-field:${label}`,
+      name: `Thread by field:${label}`,
+      callback: () => thread(
+        plugin,
+        { field: label },
+        plugin.settings.commands.thread.default_options
+      )
+    });
+  });
 };
 
 // src/interfaces/settings.ts
@@ -39449,8 +40021,8 @@ var migrate_old_settings = (settings) => {
 };
 
 // src/suggestor/edge_fields.ts
-var import_obsidian33 = require("obsidian");
-var EdgeFieldSuggestor = class extends import_obsidian33.EditorSuggest {
+var import_obsidian35 = require("obsidian");
+var EdgeFieldSuggestor = class extends import_obsidian35.EditorSuggest {
   constructor(plugin) {
     super(plugin.app);
     this.getSuggestions = ({ query }) => this.plugin.settings.edge_fields.map((f) => f.label).filter((field) => field.includes(query));
@@ -39480,182 +40052,7 @@ var EdgeFieldSuggestor = class extends import_obsidian33.EditorSuggest {
 };
 
 // src/views/tree.ts
-var import_obsidian34 = require("obsidian");
-
-// src/components/button/ChevronCollapseButton.svelte
-function create_else_block10(ctx) {
-  let chevronsdownup;
-  let current;
-  chevronsdownup = new chevrons_down_up_default({ props: { size: ICON_SIZE } });
-  return {
-    c() {
-      create_component(chevronsdownup.$$.fragment);
-    },
-    m(target, anchor) {
-      mount_component(chevronsdownup, target, anchor);
-      current = true;
-    },
-    i(local) {
-      if (current)
-        return;
-      transition_in(chevronsdownup.$$.fragment, local);
-      current = true;
-    },
-    o(local) {
-      transition_out(chevronsdownup.$$.fragment, local);
-      current = false;
-    },
-    d(detaching) {
-      destroy_component(chevronsdownup, detaching);
-    }
-  };
-}
-function create_if_block18(ctx) {
-  let chevronsupdown;
-  let current;
-  chevronsupdown = new chevrons_up_down_default({ props: { size: ICON_SIZE } });
-  return {
-    c() {
-      create_component(chevronsupdown.$$.fragment);
-    },
-    m(target, anchor) {
-      mount_component(chevronsupdown, target, anchor);
-      current = true;
-    },
-    i(local) {
-      if (current)
-        return;
-      transition_in(chevronsupdown.$$.fragment, local);
-      current = true;
-    },
-    o(local) {
-      transition_out(chevronsupdown.$$.fragment, local);
-      current = false;
-    },
-    d(detaching) {
-      destroy_component(chevronsupdown, detaching);
-    }
-  };
-}
-function create_fragment52(ctx) {
-  let button;
-  let current_block_type_index;
-  let if_block;
-  let button_aria_label_value;
-  let current;
-  let mounted;
-  let dispose;
-  const if_block_creators = [create_if_block18, create_else_block10];
-  const if_blocks = [];
-  function select_block_type(ctx2, dirty) {
-    if (
-      /*open*/
-      ctx2[0]
-    )
-      return 0;
-    return 1;
-  }
-  current_block_type_index = select_block_type(ctx, -1);
-  if_block = if_blocks[current_block_type_index] = if_block_creators[current_block_type_index](ctx);
-  return {
-    c() {
-      button = element("button");
-      if_block.c();
-      attr(
-        button,
-        "class",
-        /*cls*/
-        ctx[1]
-      );
-      attr(button, "aria-label", button_aria_label_value = /*open*/
-      ctx[0] ? "Collapse" : "Expand");
-    },
-    m(target, anchor) {
-      insert(target, button, anchor);
-      if_blocks[current_block_type_index].m(button, null);
-      current = true;
-      if (!mounted) {
-        dispose = listen(
-          button,
-          "click",
-          /*click_handler*/
-          ctx[2]
-        );
-        mounted = true;
-      }
-    },
-    p(ctx2, [dirty]) {
-      let previous_block_index = current_block_type_index;
-      current_block_type_index = select_block_type(ctx2, dirty);
-      if (current_block_type_index !== previous_block_index) {
-        group_outros();
-        transition_out(if_blocks[previous_block_index], 1, 1, () => {
-          if_blocks[previous_block_index] = null;
-        });
-        check_outros();
-        if_block = if_blocks[current_block_type_index];
-        if (!if_block) {
-          if_block = if_blocks[current_block_type_index] = if_block_creators[current_block_type_index](ctx2);
-          if_block.c();
-        } else {
-        }
-        transition_in(if_block, 1);
-        if_block.m(button, null);
-      }
-      if (!current || dirty & /*cls*/
-      2) {
-        attr(
-          button,
-          "class",
-          /*cls*/
-          ctx2[1]
-        );
-      }
-      if (!current || dirty & /*open*/
-      1 && button_aria_label_value !== (button_aria_label_value = /*open*/
-      ctx2[0] ? "Collapse" : "Expand")) {
-        attr(button, "aria-label", button_aria_label_value);
-      }
-    },
-    i(local) {
-      if (current)
-        return;
-      transition_in(if_block);
-      current = true;
-    },
-    o(local) {
-      transition_out(if_block);
-      current = false;
-    },
-    d(detaching) {
-      if (detaching) {
-        detach(button);
-      }
-      if_blocks[current_block_type_index].d();
-      mounted = false;
-      dispose();
-    }
-  };
-}
-function instance52($$self, $$props, $$invalidate) {
-  let { cls = "" } = $$props;
-  let { open } = $$props;
-  const click_handler = () => $$invalidate(0, open = !open);
-  $$self.$$set = ($$props2) => {
-    if ("cls" in $$props2)
-      $$invalidate(1, cls = $$props2.cls);
-    if ("open" in $$props2)
-      $$invalidate(0, open = $$props2.open);
-  };
-  return [open, cls, click_handler];
-}
-var ChevronCollapseButton = class extends SvelteComponent {
-  constructor(options) {
-    super();
-    init(this, options, instance52, create_fragment52, safe_not_equal, { cls: 1, open: 0 });
-  }
-};
-var ChevronCollapseButton_default = ChevronCollapseButton;
+var import_obsidian36 = require("obsidian");
 
 // src/components/side_views/TreeView.svelte
 function create_else_block11(ctx) {
@@ -39679,7 +40076,7 @@ function create_else_block11(ctx) {
     }
   };
 }
-function create_if_block19(ctx) {
+function create_if_block20(ctx) {
   let nestededgelist;
   let current;
   nestededgelist = new NestedEdgeList_default({
@@ -39688,13 +40085,13 @@ function create_if_block19(ctx) {
         /*sort*/
         ctx[7]
       ),
+      tree: (
+        /*tree*/
+        ctx[6]
+      ),
       plugin: (
         /*plugin*/
         ctx[0]
-      ),
-      open_signal: (
-        /*open_signal*/
-        ctx[5]
       ),
       show_attributes: (
         /*show_attributes*/
@@ -39704,10 +40101,8 @@ function create_if_block19(ctx) {
         /*show_node_options*/
         ctx[8]
       ),
-      tree: (
-        /*tree*/
-        ctx[6]
-      )
+      open_signal: !/*collapse*/
+      ctx[5]
     }
   });
   return {
@@ -39724,22 +40119,22 @@ function create_if_block19(ctx) {
       128)
         nestededgelist_changes.sort = /*sort*/
         ctx2[7];
-      if (dirty & /*plugin*/
-      1)
-        nestededgelist_changes.plugin = /*plugin*/
-        ctx2[0];
-      if (dirty & /*open_signal*/
-      32)
-        nestededgelist_changes.open_signal = /*open_signal*/
-        ctx2[5];
-      if (dirty & /*show_attributes*/
-      16)
-        nestededgelist_changes.show_attributes = /*show_attributes*/
-        ctx2[4];
       if (dirty & /*tree*/
       64)
         nestededgelist_changes.tree = /*tree*/
         ctx2[6];
+      if (dirty & /*plugin*/
+      1)
+        nestededgelist_changes.plugin = /*plugin*/
+        ctx2[0];
+      if (dirty & /*show_attributes*/
+      16)
+        nestededgelist_changes.show_attributes = /*show_attributes*/
+        ctx2[4];
+      if (dirty & /*collapse*/
+      32)
+        nestededgelist_changes.open_signal = !/*collapse*/
+        ctx2[5];
       nestededgelist.$set(nestededgelist_changes);
     },
     i(local) {
@@ -39762,7 +40157,7 @@ function create_key_block6(ctx) {
   let if_block;
   let if_block_anchor;
   let current;
-  const if_block_creators = [create_if_block19, create_else_block11];
+  const if_block_creators = [create_if_block20, create_else_block11];
   const if_blocks = [];
   function select_block_type(ctx2, dirty) {
     if (
@@ -39824,7 +40219,7 @@ function create_key_block6(ctx) {
     }
   };
 }
-function create_fragment53(ctx) {
+function create_fragment54(ctx) {
   let div3;
   let div1;
   let div0;
@@ -39837,7 +40232,7 @@ function create_fragment53(ctx) {
   let updating_show_attributes;
   let t2;
   let chevroncollapsebutton;
-  let updating_open;
+  let updating_collapse;
   let t3;
   let mergefieldsbutton;
   let updating_merge_fields;
@@ -39890,19 +40285,19 @@ function create_fragment53(ctx) {
   }
   showattributesselectormenu = new ShowAttributesSelectorMenu_default({ props: showattributesselectormenu_props });
   binding_callbacks.push(() => bind(showattributesselectormenu, "show_attributes", showattributesselectormenu_show_attributes_binding));
-  function chevroncollapsebutton_open_binding(value) {
+  function chevroncollapsebutton_collapse_binding(value) {
     ctx[13](value);
   }
   let chevroncollapsebutton_props = { cls: "clickable-icon nav-action-button" };
   if (
-    /*open_signal*/
+    /*collapse*/
     ctx[5] !== void 0
   ) {
-    chevroncollapsebutton_props.open = /*open_signal*/
+    chevroncollapsebutton_props.collapse = /*collapse*/
     ctx[5];
   }
   chevroncollapsebutton = new ChevronCollapseButton_default({ props: chevroncollapsebutton_props });
-  binding_callbacks.push(() => bind(chevroncollapsebutton, "open", chevroncollapsebutton_open_binding));
+  binding_callbacks.push(() => bind(chevroncollapsebutton, "collapse", chevroncollapsebutton_collapse_binding));
   function mergefieldsbutton_merge_fields_binding(value) {
     ctx[14](value);
   }
@@ -39958,7 +40353,7 @@ function create_fragment53(ctx) {
       attr(div0, "class", "nav-buttons-container");
       attr(div1, "class", "nav-header");
       attr(div2, "class", "BC-tree-view-items");
-      attr(div3, "class", "markdown-rendered BC-tree-view -mt-2");
+      attr(div3, "class", "markdown-rendered BC-tree-view");
     },
     m(target, anchor) {
       insert(target, div3, anchor);
@@ -40006,12 +40401,12 @@ function create_fragment53(ctx) {
       }
       showattributesselectormenu.$set(showattributesselectormenu_changes);
       const chevroncollapsebutton_changes = {};
-      if (!updating_open && dirty & /*open_signal*/
+      if (!updating_collapse && dirty & /*collapse*/
       32) {
-        updating_open = true;
-        chevroncollapsebutton_changes.open = /*open_signal*/
+        updating_collapse = true;
+        chevroncollapsebutton_changes.collapse = /*collapse*/
         ctx2[5];
-        add_flush_callback(() => updating_open = false);
+        add_flush_callback(() => updating_collapse = false);
       }
       chevroncollapsebutton.$set(chevroncollapsebutton_changes);
       const mergefieldsbutton_changes = {};
@@ -40087,15 +40482,14 @@ function create_fragment53(ctx) {
     }
   };
 }
-function instance53($$self, $$props, $$invalidate) {
+function instance54($$self, $$props, $$invalidate) {
   let sort;
   let edge_field_labels;
   let tree;
   let $active_file_store;
   component_subscribe($$self, active_file_store, ($$value) => $$invalidate(10, $active_file_store = $$value));
   let { plugin } = $$props;
-  let { edge_sort_id, merge_fields, show_attributes, show_node_options, field_group_labels } = plugin.settings.views.side.tree;
-  let open_signal = plugin.settings.views.side.tree.collapse;
+  let { edge_sort_id, merge_fields, show_attributes, show_node_options, field_group_labels, collapse } = plugin.settings.views.side.tree;
   const base_traversal = (attr2) => Traverse.build_tree(
     plugin.graph,
     $active_file_store.path,
@@ -40111,9 +40505,9 @@ function instance53($$self, $$props, $$invalidate) {
     show_attributes = value;
     $$invalidate(4, show_attributes);
   }
-  function chevroncollapsebutton_open_binding(value) {
-    open_signal = value;
-    $$invalidate(5, open_signal);
+  function chevroncollapsebutton_collapse_binding(value) {
+    collapse = value;
+    $$invalidate(5, collapse);
   }
   function mergefieldsbutton_merge_fields_binding(value) {
     merge_fields = value;
@@ -40150,7 +40544,7 @@ function instance53($$self, $$props, $$invalidate) {
     merge_fields,
     field_group_labels,
     show_attributes,
-    open_signal,
+    collapse,
     tree,
     sort,
     show_node_options,
@@ -40158,7 +40552,7 @@ function instance53($$self, $$props, $$invalidate) {
     $active_file_store,
     edgesortidselector_edge_sort_id_binding,
     showattributesselectormenu_show_attributes_binding,
-    chevroncollapsebutton_open_binding,
+    chevroncollapsebutton_collapse_binding,
     mergefieldsbutton_merge_fields_binding,
     fieldgrouplabelsselector_field_group_labels_binding
   ];
@@ -40166,13 +40560,13 @@ function instance53($$self, $$props, $$invalidate) {
 var TreeView = class extends SvelteComponent {
   constructor(options) {
     super();
-    init(this, options, instance53, create_fragment53, safe_not_equal, { plugin: 0 });
+    init(this, options, instance54, create_fragment54, safe_not_equal, { plugin: 0 });
   }
 };
 var TreeView_default = TreeView;
 
 // src/views/tree.ts
-var TreeView2 = class extends import_obsidian34.ItemView {
+var TreeView2 = class extends import_obsidian36.ItemView {
   constructor(leaf, plugin) {
     super(leaf);
     this.icon = "tree-pine";
@@ -40199,7 +40593,7 @@ var TreeView2 = class extends import_obsidian34.ItemView {
 };
 
 // src/main.ts
-var BreadcrumbsPlugin = class extends import_obsidian35.Plugin {
+var BreadcrumbsPlugin = class extends import_obsidian37.Plugin {
   constructor() {
     super(...arguments);
     this.graph = new BCGraph();
@@ -40209,7 +40603,7 @@ var BreadcrumbsPlugin = class extends import_obsidian35.Plugin {
     this.refresh = async (options) => {
       if ((options == null ? void 0 : options.rebuild_graph) !== false) {
         const timer = new Timer();
-        const notice = this.settings.commands.rebuild_graph.notify ? new import_obsidian35.Notice("Rebuilding graph") : null;
+        const notice = this.settings.commands.rebuild_graph.notify ? new import_obsidian37.Notice("Rebuilding graph") : null;
         const rebuild_results = await rebuild_graph(this);
         this.graph = rebuild_results.graph;
         const explicit_edge_errors = rebuild_results.explicit_edge_results.filter((result) => result.errors.length).reduce(
@@ -40230,7 +40624,7 @@ var BreadcrumbsPlugin = class extends import_obsidian35.Plugin {
         }
         notice == null ? void 0 : notice.setMessage(
           [
-            `Rebuilt graph in ${timer.elapsed().toFixed(1)}ms`,
+            `Rebuilt graph in ${timer.elapsed_str()}ms`,
             explicit_edge_errors.length ? "\nExplicit edge errors (see console for details):" : null,
             ...Object.entries(explicit_edge_errors).map(
               ([source, errors]) => `- ${source}: ${errors.length} errors`
@@ -40341,7 +40735,7 @@ var BreadcrumbsPlugin = class extends import_obsidian35.Plugin {
       this.registerEvent(
         this.app.vault.on("create", (file) => {
           log.debug("on:create >", file.path);
-          if (file instanceof import_obsidian35.TFile) {
+          if (file instanceof import_obsidian37.TFile) {
             this.graph.upsert_node(file.path, { resolved: true });
           }
         })
@@ -40349,7 +40743,7 @@ var BreadcrumbsPlugin = class extends import_obsidian35.Plugin {
       this.registerEvent(
         this.app.vault.on("rename", (file, old_path) => {
           log.debug("on:rename >", old_path, "->", file.path);
-          if (file instanceof import_obsidian35.TFile) {
+          if (file instanceof import_obsidian37.TFile) {
             const res = this.graph.safe_rename_node(
               old_path,
               file.path
@@ -40363,7 +40757,7 @@ var BreadcrumbsPlugin = class extends import_obsidian35.Plugin {
       this.registerEvent(
         this.app.vault.on("delete", (file) => {
           log.debug("on:delete >", file.path);
-          if (file instanceof import_obsidian35.TFile) {
+          if (file instanceof import_obsidian37.TFile) {
             this.graph.setNodeAttribute(
               file.path,
               "resolved",
@@ -40393,78 +40787,7 @@ var BreadcrumbsPlugin = class extends import_obsidian35.Plugin {
         ctx.addChild(mdrc);
       }
     );
-    this.addCommand({
-      id: "breadcrumbs:rebuild-graph",
-      name: "Rebuild graph",
-      callback: async () => await this.refresh()
-    });
-    Object.keys(VIEW_IDS).forEach((view_id) => {
-      this.addCommand({
-        id: `breadcrumbs:open-${view_id}-view`,
-        name: `Open ${view_id} view`,
-        callback: () => this.activateView(
-          VIEW_IDS[view_id]
-        )
-      });
-    });
-    this.addCommand({
-      id: "breadcrumbs:create-list-index",
-      name: "Create list index",
-      callback: () => {
-        new CreateListIndexModal(this.app, this).open();
-      }
-    });
-    this.addCommand({
-      id: "breadcrumbs:graph-stats",
-      name: "Show/Copy graph stats",
-      callback: async () => {
-        const stats = get_graph_stats(this.graph, {
-          groups: this.settings.edge_field_groups
-        });
-        log.feat("Graph stats >", stats);
-        await navigator.clipboard.writeText(
-          JSON.stringify(stats, null, 2)
-        );
-        new import_obsidian35.Notice(
-          "Graph stats printed to console and copied to clipboard"
-        );
-      }
-    });
-    this.addCommand({
-      id: "breadcrumbs:freeze-implied-edges-to-note",
-      name: "Freeze implied edges to note",
-      callback: async () => {
-        const active_file = get_store_value(active_file_store);
-        if (!active_file)
-          return;
-        await freeze_implied_edges_to_note(
-          this,
-          active_file,
-          this.settings.commands.freeze_implied_edges.default_options
-        );
-        new import_obsidian35.Notice("Implied edges frozen to note");
-      }
-    });
-    this.settings.edge_field_groups.forEach((group) => {
-      this.addCommand({
-        id: `breadcrumbs:jump-to-first-neighbour-group:${group.label}`,
-        name: `Jump to first neighbour by group:${group.label}`,
-        callback: () => jump_to_neighbour(this, {
-          attr: { $or_fields: group.fields }
-        })
-      });
-    });
-    this.settings.edge_fields.forEach(({ label }) => {
-      this.addCommand({
-        id: `breadcrumbs:thread-field:${label}`,
-        name: `Thread by field:${label}`,
-        callback: () => thread(
-          this,
-          { field: label },
-          this.settings.commands.thread.default_options
-        )
-      });
-    });
+    init_all_commands(this);
     log.debug("loaded Breadcrumbs plugin");
   }
   onunload() {

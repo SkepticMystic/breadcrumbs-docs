@@ -115,3 +115,9 @@ graph LR
 	C -->|child| D
 	A -.->|cousin| D
 ```
+
+## Bulk Add Rules
+
+You can also add transitive rules in bulk, using the syntax shown above (`[field-one, field-two] -> close-field`). To do so, scroll down to the bottom of the Transitive Implied Relations settings and open the "Bulk Add Rules" dropdown. Then, paste a new-line separated list of rules into the input area, and click "Bulk Add".
+
+![[Bulk Add Transitive Rules.png]]

@@ -3,6 +3,7 @@ Similar to [Monica](https://github.com/monicahq/monica), Breadcrumbs can be used
 Using just a handful of simple, manual relations, we can automatically build complex networks of personal connections. For example, in a basic setup starting with the note `[[Myself]]`:
 
 ![[Personal Relationship Management Mermaid Diagram.png]]
+
 ## Steps
 
 ### 1. Edge Fields
@@ -53,6 +54,15 @@ Using the [[Implied Edge Builders]], we can craft custom relationships for Bread
 
 > [!NOTE]
 > You can use any combination of fields in the implied rules. But the closing field also has to be in your [[Edge Fields]], so remember to add them there first.
+
+> [!TIP]
+> You can also [[Transitive Implied Relations#Bulk Add Rules|bulk-add]] the rules:
+>
+> ```
+> [parent] <- child
+> [parent, child] -> sibling
+> [spouse, sibling] -> sibling-in-law
+> ```
 
 After adding some implied relations, [[Rebuild Graph|rebuild the graph]], and check the [[Matrix View]] again. You should see some extra relationships filled in, without you having to explicitly define them!
 

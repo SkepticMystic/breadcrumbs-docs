@@ -122,6 +122,15 @@ To set this up, open `Settings > Implied Relations > Transitive`, and add the fo
 
 ![[transitive (next-month) <- prev-month.png]]
 
+> [!TIP]
+> You can also [[Transitive Implied Relations#Bulk Add Rules|bulk-add]] the rules:
+>
+> ```
+> [month] <- days
+> [tomorrow] <- yesterday
+> [next-month] <- prev-month
+> ```
+
 Now, when you [[Rebuild Graph|rebuild the graph]], Breadcrumbs will apply these rules to your _explicit_ edges, by adding the **implied** edges above. It "fills in the opposite direction".
 
 ### 5. Leverage

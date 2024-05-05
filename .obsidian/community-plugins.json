@@ -3,5 +3,7 @@
   "breadcrumbs",
   "advanced-cursors",
   "obsidian-linter",
-  "obsidian-git"
+  "obsidian-git",
+  "copy-publish-url",
+  "cmdr"
 ]

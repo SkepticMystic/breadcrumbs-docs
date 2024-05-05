@@ -51,6 +51,6 @@ Breadcrumbs gives the following benefits:
 	- Breadcrumbs can _infer_ more complex relationships from the initial edges
 	- You have full control over the rules for adding implied edges
 - Use the [[Views|Views]] to see your fields in action
-	- These general run a [[Reference#Traversal|graph traversal]] and present the results in some way
+	- These general run a [[Concepts#Traversal|graph traversal]] and present the results in some way
 - Try out the [[Commands|Commands]] to do other useful stuff
 	- Quickly jump to neighbouring notes, summarise your graph, "freeze" implied edges to your notes for future-proofing

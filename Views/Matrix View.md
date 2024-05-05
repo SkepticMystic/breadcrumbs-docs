@@ -2,13 +2,13 @@ The _Matrix View_ appears on the side of the editor, and shows the **immediate o
 
 ![[Matrix View.png]]
 
-On the right side of each link, you'll see an `x` or `i`, indicating if that edge is [[Explicit Edge Builders|explicit]] or [[Implied Edge Builders|implied]]. Hover over the icon to see the [[Reference#Edge Attributes|source]] of real edges, and the [[Reference#Edge Attributes|kind]] of implied edges (as well as the [[Implied Relation Rounds|round]] they were added in).
+On the right side of each link, you'll see an `x` or `i`, indicating if that edge is [[Explicit Edge Builders|explicit]] or [[Implied Edge Builders|implied]]. Hover over the icon to see the [[Concepts#Edge Attributes|source]] of real edges, and the [[Concepts#Edge Attributes|kind]] of implied edges (as well as the [[Implied Relation Rounds|round]] they were added in).
 
 ## Settings
 
 Change under `Settings > Views > Matrix`:
 
 - **Collapse**: Collapse each group of fields by default
-- **Sort**: Change the [[Reference#Edge Sorters|edge sorter]] used
-- **Show Attributes**: Choose which [[Reference#Edge Attributes|edge attributes]] show (when hovering the `x`/`i` icon)
+- **Sort**: Change the [[Concepts#Edge Sorters|edge sorter]] used
+- **Show Attributes**: Choose which [[Concepts#Edge Attributes|edge attributes]] show (when hovering the `x`/`i` icon)
 - **Field Groups**: Choose which [[Field Groups|field groups]] are shown

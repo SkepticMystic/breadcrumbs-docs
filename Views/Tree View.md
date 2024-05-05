@@ -6,8 +6,8 @@ The Tree View appears on the side of the editor, and shows all paths with a chos
 
 Change under `Settings > Views > Tree`
 
-- **Sort**: Change the [[Reference#Edge Sorters|edge sorter]] used
-- **Show Attributes**: Choose which [[Reference#Edge Attributes|edge attributes]] show
+- **Sort**: Change the [[Concepts#Edge Sorters|edge sorter]] used
+- **Show Attributes**: Choose which [[Concepts#Edge Attributes|edge attributes]] show
 - **Collapse**: Fold the nested paths
-- **Merge Fields**: [[Reference#Traversal|Traverse]] each [[Edge Fields|field]] separately, or all together
+- **Merge Fields**: [[Concepts#Traversal|Traverse]] each [[Edge Fields|field]] separately, or all together
 - **Field Groups**: Choose which [[Field Groups|field groups]] are shown

@@ -26,7 +26,7 @@ parent: "[[Mother]]"
 parent:: [[Mother]]
 ```
 
-This would result in the following [[Reference#Graph|graph]]:
+This would result in the following [[Concepts#Graph|graph]]:
 
 ```mermaid
 flowchart LR

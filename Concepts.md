@@ -1,3 +1,8 @@
+---
+aliases:
+  - Reference
+---
+
 This page defines various concepts used across Breadcrumbs
 
 ## Graph

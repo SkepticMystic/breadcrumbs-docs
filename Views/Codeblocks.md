@@ -34,7 +34,7 @@ How to visualise the results.
 start-note?: string
 ```
 
-Override the starting note of the [[Reference#Traversal|traversal]]. By default, the note that the codeblock is in will be used.
+Override the starting note of the [[Concepts#Traversal|traversal]]. By default, the note that the codeblock is in will be used.
 
 _Example_: `start-note: folder/note.md`
 
@@ -64,7 +64,7 @@ _Example_: `field-groups: [ups, downs]`
 merge-fields?: (true) | false
 ```
 
-If `false`, each of the chosen `fields` is [[Reference#Traversal|traversed]] separately. If `merge-fields` is set to `true`, all fields will be traversed together, meaning paths of edges with different [[Edge Fields|fields]] will be shown together.
+If `false`, each of the chosen `fields` is [[Concepts#Traversal|traversed]] separately. If `merge-fields` is set to `true`, all fields will be traversed together, meaning paths of edges with different [[Edge Fields|fields]] will be shown together.
 
 _Example_: `merge-fields: true`
 
@@ -156,7 +156,7 @@ _Example_: `dataview-from: '#tag and !"Folder"'`
 show-attributes?: EdgeAttribute[]
 ```
 
-Show specific [[Reference#Edge Attributes|edge attributes]] about each item in the result. By default, none are shown.
+Show specific [[Concepts#Edge Attributes|edge attributes]] about each item in the result. By default, none are shown.
 
 _Example_: `show-attributes: [field, source]`
 
@@ -166,7 +166,7 @@ _Example_: `show-attributes: [field, source]`
 sort?: <field> (asc) | desc
 ```
 
-Order the results using a given [[Reference#Edge Sorters|edge sorter]].
+Order the results using a given [[Concepts#Edge Sorters|edge sorter]].
 
 _Example_: `sort: basename`, or `sort: path desc`, or `sort: neighbour-field:next`
 

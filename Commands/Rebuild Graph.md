@@ -1,4 +1,4 @@
-This command rebuilds the [[Reference#Graph|Breadcrumbs graph]]. This is useful if you've made changes to your notes, and want to see them reflected in the graph.
+This command rebuilds the [[Concepts#Graph|Breadcrumbs graph]]. This is useful if you've made changes to your notes, and want to see them reflected in the graph.
 
 ## Rebuild Graph Settings
 

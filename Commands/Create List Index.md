@@ -16,8 +16,8 @@ An example output would be:
 
 ## Settings
 
-- **Field Groups**: Which [[Field Groups|field groups]] to include in the [[Reference#Traversal|traversal]]
+- **Field Groups**: Which [[Field Groups|field groups]] to include in the [[Concepts#Traversal|traversal]]
 - **Edge Sorter**: How to order the results
-- **Show Attributes**: Which [[Reference#Edge Attributes|edge attributes]] to show
+- **Show Attributes**: Which [[Concepts#Edge Attributes|edge attributes]] to show
 - **Indent**: Choose the string to use for indentation in the list (e.g. "` `", "`\t`")
 - **Link Kind**: Choose the kind of links to use in the list. Options include "wiki", "markdown", and "none"

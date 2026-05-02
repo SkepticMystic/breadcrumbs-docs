@@ -252,6 +252,31 @@ The [curve style](https://mermaid.js.org/syntax/flowchart.html#styling-line-curv
 
 _Example_: `mermaid-curve: natural`
 
+### `mermaid-arrow`
+
+```ts
+mermaid-arrow?: true | (false)
+```
+
+Controls whether bidirectional edges in the mermaid graph are rendered with arrowheads on both ends. Only applies when `type: mermaid`.
+
+By default (`false`), edges that run in both directions between two notes are drawn as plain lines — either solid (`---`) or dashed (`-.-`) depending on whether the edges are [[Concepts#Explicit vs Implied Edges|explicit or implied]]. No arrowheads appear on either end, which keeps the diagram cleaner when reciprocal relationships are already understood.
+
+When set to `true`, those same bidirectional edges gain arrowheads on both ends (`<--->` for explicit, `<.->` for implied), making the two-way nature of the relationship explicit in the diagram.
+
+One-directional edges are unaffected — they always render as `-->` (explicit) or `-.->` (implied) regardless of this setting.
+
+> [!EXAMPLE]
+> Suppose your vault has a `parent`/`child` implied-relation pair, so an explicit `up` edge from `2024-01-15` to `January 2024` also generates an implied `down` edge back. In the mermaid graph:
+>
+> - `mermaid-arrow: false` — the two notes are connected by a plain line (`-.-`) with no arrowheads, since the relationship is bidirectional and implied.
+> - `mermaid-arrow: true` — the connector becomes `<.->`, showing arrowheads on both ends so the direction of each relationship is visible.
+
+> [!TIP]
+> Use `mermaid-arrow: true` when sharing a graph with someone unfamiliar with your vault structure, or when the direction of implied edges matters for understanding (e.g., a `reports-to` hierarchy where both the explicit and implied edges carry meaning).
+
+_Example_: `mermaid-arrow: true`
+
 ## Examples
 
 ### Simulate the Matrix View

@@ -7,4 +7,5 @@ Various guides showing how to apply Breadcrumbs to different practical use-cases
 - [[Project and Task Management]]
 - [[Academic Reading and Literature Notes]]
 - [[Course and Curriculum Builder]]
+- [[Reading the Mermaid Graph View]]
 - [[Vault Maintenance and Graph Auditing]]

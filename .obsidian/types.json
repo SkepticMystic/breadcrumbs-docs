@@ -30,6 +30,7 @@
     "child": "multitext",
     "spouse": "multitext",
     "friend": "multitext",
-    "grandparent": "multitext"
+    "grandparent": "multitext",
+    "BC-tag-note-sibling-field": "text"
   }
 }

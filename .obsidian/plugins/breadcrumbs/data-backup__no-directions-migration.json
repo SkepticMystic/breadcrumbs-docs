@@ -1,0 +1,327 @@
+{
+	"explicit_edge_sources": {
+		"typed_link": {},
+		"list_note": {
+			"default_neighbour_field": ""
+		},
+		"tag_note": {
+			"default_field": "up",
+			"default_sibling_field": ""
+		},
+		"regex_note": {
+			"default_field": "up"
+		},
+		"dendron_note": {
+			"enabled": false,
+			"delimiter": ".",
+			"default_field": "up",
+			"display_trimmed": false,
+			"default_sibling_field": ""
+		},
+		"johnny_decimal_note": {
+			"enabled": false,
+			"delimiter": ".",
+			"default_field": "up",
+			"default_sibling_field": ""
+		},
+		"date_note": {
+			"enabled": false,
+			"date_format": "yyyy-MM-dd",
+			"default_field": "next",
+			"stretch_to_existing": false,
+			"week": {
+				"enabled": false,
+				"date_format": "kkkk-'W'WW",
+				"folder": "",
+				"next_field": "next",
+				"up_field": "up"
+			},
+			"month": {
+				"enabled": false,
+				"date_format": "yyyy-MM",
+				"folder": "",
+				"next_field": "next",
+				"up_field": "up"
+			},
+			"quarter": {
+				"enabled": false,
+				"date_format": "yyyy-'Q'q",
+				"folder": "",
+				"next_field": "next",
+				"up_field": "up"
+			},
+			"year": {
+				"enabled": false,
+				"date_format": "yyyy",
+				"folder": "",
+				"next_field": "next",
+				"up_field": "up"
+			}
+		}
+	},
+	"views": {
+		"page": {
+			"all": {
+				"sticky": false,
+				"readable_line_width": true
+			},
+			"trail": {
+				"enabled": true,
+				"format": "grid",
+				"selection": "all",
+				"default_depth": 999,
+				"no_path_message": "",
+				"show_controls": true,
+				"show_node_options": {
+					"ext": false,
+					"folder": false,
+					"alias": false
+				},
+				"merge_fields": false,
+				"field_group_labels": [
+					"ups"
+				]
+			},
+			"prev_next": {
+				"enabled": true,
+				"show_node_options": {
+					"ext": false,
+					"folder": false,
+					"alias": false
+				},
+				"field_group_labels": {
+					"prev": [
+						"prevs"
+					],
+					"next": [
+						"nexts"
+					]
+				},
+				"period_rows": {
+					"week": false,
+					"month": false,
+					"quarter": false,
+					"year": false
+				}
+			}
+		},
+		"side": {
+			"matrix": {
+				"show_node_options": {
+					"ext": false,
+					"folder": false,
+					"alias": false
+				},
+				"show_attributes": [
+					"source",
+					"implied_kind",
+					"round"
+				],
+				"edge_sort_id": {
+					"field": "basename",
+					"order": 1
+				},
+				"field_group_labels": [
+					"ups",
+					"downs",
+					"sames",
+					"nexts",
+					"prevs"
+				],
+				"collapse": false,
+				"custom_sort_fields": false,
+				"custom_sort_field_labels": [],
+				"lock_view": false,
+				"lock_path": ""
+			},
+			"tree": {
+				"collapse": false,
+				"show_attributes": [],
+				"edge_sort_id": {
+					"field": "basename",
+					"order": 1
+				},
+				"show_node_options": {
+					"ext": false,
+					"folder": false,
+					"alias": false
+				},
+				"merge_fields": false,
+				"field_group_labels": [
+					"downs"
+				],
+				"default_depth": 5,
+				"lock_view": false,
+				"lock_path": "",
+				"find_root": true,
+				"find_root_field_group_labels": [
+					"ups"
+				]
+			}
+		},
+		"codeblocks": {
+			"show_node_options": {
+				"ext": false,
+				"folder": false,
+				"alias": false
+			}
+		}
+	},
+	"commands": {
+		"rebuild_graph": {
+			"notify": true,
+			"trigger": {
+				"note_save": false,
+				"layout_change": false
+			}
+		},
+		"list_index": {
+			"default_options": {
+				"dir": "down",
+				"indent": "\\t",
+				"hierarchy_i": -1,
+				"link_kind": "wiki",
+				"edge_sort_id": {
+					"order": 1,
+					"field": "basename"
+				},
+				"show_node_options": {
+					"ext": false,
+					"alias": true,
+					"folder": false
+				},
+				"fields": [],
+				"show_attributes": [],
+				"field_group_labels": []
+			}
+		},
+		"freeze_implied_edges": {
+			"default_options": {
+				"destination": "frontmatter",
+				"included_fields": [],
+				"use_alias": true
+			}
+		},
+		"thread": {
+			"default_options": {
+				"destination": "frontmatter",
+				"target_path_template": "{{source.folder}}/{{attr.field}} {{source.basename}}"
+			}
+		}
+	},
+	"suggestors": {
+		"edge_field": {
+			"enabled": true,
+			"trigger": "."
+		}
+	},
+	"debug": {
+		"level": "INFO"
+	},
+	"is_dirty": false,
+	"edge_fields": [
+		{
+			"label": "parent"
+		},
+		{
+			"label": "sibling"
+		},
+		{
+			"label": "child"
+		},
+		{
+			"label": "spouse"
+		},
+		{
+			"label": "friend"
+		},
+		{
+			"label": "grandparent"
+		}
+	],
+	"edge_field_groups": [
+		{
+			"label": "ups",
+			"fields": []
+		},
+		{
+			"label": "downs",
+			"fields": []
+		},
+		{
+			"label": "sames",
+			"fields": []
+		},
+		{
+			"label": "nexts",
+			"fields": []
+		},
+		{
+			"label": "prevs",
+			"fields": []
+		},
+		{
+			"label": "hierarchy 1",
+			"fields": []
+		}
+	],
+	"implied_relations": {
+		"transitive": [
+			{
+				"name": "Opposite Direction: up/down",
+				"rounds": 1,
+				"chain": [
+					{
+						"field": "up"
+					}
+				],
+				"close_field": "down",
+				"close_reversed": true
+			},
+			{
+				"name": "Opposite Direction: down/up",
+				"rounds": 1,
+				"chain": [
+					{
+						"field": "down"
+					}
+				],
+				"close_field": "up",
+				"close_reversed": true
+			},
+			{
+				"name": "Opposite Direction: same/same",
+				"rounds": 1,
+				"chain": [
+					{
+						"field": "same"
+					}
+				],
+				"close_field": "same",
+				"close_reversed": true
+			},
+			{
+				"name": "Opposite Direction: next/prev",
+				"rounds": 1,
+				"chain": [
+					{
+						"field": "next"
+					}
+				],
+				"close_field": "prev",
+				"close_reversed": true
+			},
+			{
+				"name": "Opposite Direction: prev/next",
+				"rounds": 1,
+				"chain": [
+					{
+						"field": "prev"
+					}
+				],
+				"close_field": "next",
+				"close_reversed": true
+			}
+		]
+	}
+}

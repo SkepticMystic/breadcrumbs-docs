@@ -1,4 +1,4 @@
-Breadcrumbs adds a new codeblock language, `breadcrumbs`. Currently, this can be used to render a tree of all paths in a given direction from the current note (similar to the [[Tree View]]), or a [Mermaid](https://mermaid.js.org) graph of the same data. The codeblocks use **YAML**, for example:
+Breadcrumbs adds a new codeblock language, `breadcrumbs`. Currently, this can be used to render a tree of all paths in a given direction from the current note (similar to the [[Tree View]]), a [Mermaid](https://mermaid.js.org) graph, or a [Markmap](https://markmap.js.org) mind map of the same data. The codeblocks use **YAML**, for example:
 
 ```yaml
 type: tree
@@ -11,6 +11,12 @@ This would render a markdown list of all paths pointing _down_ from the current 
 
 ![[view.codeblock.tree.png]]
 
+## Settings
+
+Change under `Settings > Views > Codeblocks`:
+
+- **Note Display Options**: Three toggles — **Folder**, **Extension**, and **Alias** — that control how note links are displayed across all codeblock results.
+
 ## Available Fields
 
 The following fields can be added to the codeblock to customise the output. Below the heading name for each field, you'll see the possible values/options for that field, as well as it's default value in (parentheses). Optional fields are marked with a `?`. If you want to use the default value, then you don't need to add that field to the codeblock.
@@ -18,13 +24,14 @@ The following fields can be added to the codeblock to customise the output. Belo
 ### `type`
 
 ```ts
-type?: (tree) | mermaid
+type?: (tree) | mermaid | markmap
 ```
 
 How to visualise the results.
 
 - `tree` is similar to the [[Tree View]]
 - `mermaid` renders the results in a [Mermaid](https://mermaid.js.org) graph
+- `markmap` renders the results as an interactive [Markmap](https://markmap.js.org) mind map
 
 ![[Codeblock Mermaid Binary Tree.png]]
 
@@ -130,6 +137,21 @@ If `type: tree`, and `collapse: true`, all nested lists will be collapsed/folded
 
 _Example_: `collapse: true`
 
+### `content`
+
+```ts
+content?: open | closed
+```
+
+Controls whether the items in the codeblock result are rendered in an open or closed [HTML `<details>` element](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/details), allowing the whole block to be collapsed by the reader.
+
+- `open`: The block is expandable, and starts expanded
+- `closed`: The block is expandable, and starts collapsed
+
+If omitted, no `<details>` wrapper is used and the content is always visible.
+
+_Example_: `content: closed`
+
 ### `flat`
 
 ```ts
@@ -159,6 +181,16 @@ show-attributes?: EdgeAttribute[]
 Show specific [[Concepts#Edge Attributes|edge attributes]] about each item in the result. By default, none are shown.
 
 _Example_: `show-attributes: [field, source]`
+
+### `field-prefix`
+
+```ts
+field-prefix?: true | (false)
+```
+
+When `show-attributes` includes `field`, prefix each item with the name of its [[Edge Fields|edge field]] rather than showing the field as a separate attribute column.
+
+_Example_: `field-prefix: true`
 
 ### `sort`
 
